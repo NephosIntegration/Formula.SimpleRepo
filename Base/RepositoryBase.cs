@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using Dapper;
 using System.Threading.Tasks;
 using System.Threading;
+using Microsoft.Extensions.Configuration;
+using System.Data.SqlClient;
 
 namespace Formula.SimpleRepo
 {
@@ -13,11 +15,20 @@ namespace Formula.SimpleRepo
         where TModel : class
         where TConstraintsModel : new()
     {
+        protected readonly IConfiguration _config;
+        protected String _connectionName;
         protected IDbConnection _connection;
 
-        public RepositoryBase(IDbConnection connection)
+        public RepositoryBase(IConfiguration config)
         {
-            this._connection = connection;
+            this._config = config;
+            this._connectionName = ConnectionDetails.GetConnectionName<TModel>();
+            this._connection = new SqlConnection(GetConnectionString());
+        }
+
+        protected virtual String GetConnectionString()
+        {
+            return _config.GetValue<String>($"ConnectionStrings:{_connectionName}");
         }
 
         public int Delete(object id, IDbTransaction transaction = null, int? commandTimeout = null)
