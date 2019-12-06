@@ -21,12 +21,14 @@ namespace Formula.SimpleRepo
             return repos;
         }
 
-        public static void AddRepositories(this IServiceCollection services) 
+        public static IServiceCollection AddRepositories(this IServiceCollection services) 
         {
             foreach(var type in RepositoryConfiguration.GetRepositoryList())
             {
                 services.AddScoped(type);
             }
+
+            return services;
         }
     }
 }
