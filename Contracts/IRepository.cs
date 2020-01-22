@@ -26,15 +26,15 @@ namespace Formula.SimpleRepo
         Task<IEnumerable<T>> GetListAsync(object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null);
         IEnumerable<T> GetListPaged(int pageNumber, int rowsPerPage, string conditions, string orderby, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null);
         Task<IEnumerable<T>> GetListPagedAsync(int pageNumber, int rowsPerPage, string conditions, string orderby, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null);
-        int? Insert<TEntity>(TEntity entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null);
-        TKey Insert<TKey, TEntity>(TEntity entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null);
-        Task<TKey> InsertAsync<TKey, TEntity>(TEntity entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null);
-        Task<int?> InsertAsync<TEntity>(TEntity entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null);
+        int? Insert(T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null);
+        TKey Insert<TKey>(T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null);
+        Task<TKey> InsertAsync<TKey>(T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null);
+        Task<int?> InsertAsync(T entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null);
         int RecordCount(string conditions = "", object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null);
         int RecordCount(object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null);
         Task<int> RecordCountAsync(string conditions = "", object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null);
         Task<int> RecordCountAsync(object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null);
-        int Update<TEntity>(TEntity entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null);
-        Task<int> UpdateAsync<TEntity>(TEntity entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null, CancellationToken? token = null);
+        int Update(T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null);
+        Task<int> UpdateAsync(T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null, CancellationToken? token = null);
     }
 }
