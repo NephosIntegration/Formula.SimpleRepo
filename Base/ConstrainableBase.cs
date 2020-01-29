@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Collections;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Linq;
+using System.Reflection;
 
 namespace Formula.SimpleRepo
 {
@@ -10,6 +12,13 @@ namespace Formula.SimpleRepo
         : IConstrainable 
         where TConstraintsModel : new()
     {
+        public String GetDatabaseColumnName(PropertyInfo prop)
+        {
+            var details = prop.GetCustomAttributes(typeof(Dapper.ColumnAttribute), true).FirstOrDefault() as Dapper.ColumnAttribute;
+
+            return (details == null || String.IsNullOrEmpty(details.Name)) ? prop.Name : details.Name;
+        }
+
         public List<Constraint> GetConstrainables()
         {
             var output = new List<Constraint>();
@@ -29,7 +38,7 @@ namespace Formula.SimpleRepo
                     typeCode = System.Type.GetTypeCode(prop.PropertyType);
                 }
 
-                output.Add(new Constraint(prop.Name, typeCode, nullable));
+                output.Add(new Constraint(prop.Name, this.GetDatabaseColumnName(prop), typeCode, nullable));
             }
 
             return output;         
@@ -66,7 +75,7 @@ namespace Formula.SimpleRepo
 
                         if (constraint == null)
                         {
-                            constraint = new Constraint(validConstraint.Column, validConstraint.DataType, validConstraint.Nullable, constraints[key].ToString(), Comparison.Equals);
+                            constraint = new Constraint(validConstraint.Column, validConstraint.DatabaseColumnName, validConstraint.DataType, validConstraint.Nullable, constraints[key].ToString(), Comparison.Equals);
                         }
 
                         output.Add(constraint);
