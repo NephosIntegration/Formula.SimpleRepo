@@ -89,6 +89,7 @@ namespace Formula.SimpleRepo
         public List<Constraint> GetConstraints(JObject json)
         {
             var hash = new Hashtable();
+
             foreach (var item in json) 
             {
                 hash.Add(item.Key, item.Value.ToString());

@@ -5,6 +5,7 @@ using System.Collections;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Dapper;
+using System.Linq;
 
 namespace Formula.SimpleRepo
 {
@@ -14,9 +15,59 @@ namespace Formula.SimpleRepo
     {
         protected SqlBuilder _builder = new SqlBuilder();
 
-        public Bindable Where(List<Constraint> constraints)
+        protected Boolean _applyScopedConstraints = true; // By default, if we have any scoped constraints they will be applied
+        public ConstrainableBase<TConstraintsModel> ApplyScopedConstraints()
+        {
+            this._applyScopedConstraints = true;
+            return this;
+        }
+        public ConstrainableBase<TConstraintsModel> RemoveScopedConstraints()
+        {
+            this._applyScopedConstraints = false;
+            return this;
+        }
+
+        public virtual List<Constraint> ScopedConstraints(List<Constraint> currentConstraints)
+        {
+            return null;
+        }
+
+        public virtual List<Constraint> MergeConstraints(List<Constraint> original, List<Constraint> additional)
+        {
+            var output = original;
+
+            if (this._applyScopedConstraints)
+            {
+                if (original == null || original.Count() <= 0)
+                {
+                    output = additional;
+                }
+                else if (additional != null && additional.Count() > 0)
+                {
+                    foreach(var constraint in additional)
+                    {
+                        int existingIndex = original.FindIndex(i => i.Column.Equals(constraint.Column));
+                        if (existingIndex > -1)
+                        {
+                            output[existingIndex] = constraint;
+                        }
+                        else
+                        {
+                            output.Add(constraint);
+                        }
+                    }
+                }
+            }
+
+            return output;
+        }
+
+        public Bindable Where(List<Constraint> finalConstraints)
         {
             var output = new Bindable();
+
+            var scoped = this.ScopedConstraints(finalConstraints);
+            var constraints = this.MergeConstraints(finalConstraints, scoped);
 
             foreach(var constraint in constraints) 
             {

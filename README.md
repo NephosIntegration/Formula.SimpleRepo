@@ -113,6 +113,47 @@ We can now pass our custom constraints (which include our dynamic custom constra
 public class TodoRepository : RepositoryBase<Todo, TodoConstraints>
 ```
 
+# Scoped Constraints
+Scoped constraints, are contraints that get applied automatically with every request.  These are applied in addition to (and instead of) any contraints applied that might be present.  These are useful for applying default constraints that need to be applied every time, and also as a strategy for limiting the scope of the data returned for security reasons, or other creative business rule purposes.  You can also programatically turn these on and off.
+
+For example, if I want to limit the scope of data, so that users can only see their data based on their user id, I can apply a scoped constraint.  This way if a request for all data, is made, the server side can limit the results.
+
+
+On your repository implementation override the **ScopedConstraints** function.  
+The input for this fucntion is all the currently applied constraints that are being applied (which could be useful for various business rule purposes).
+The expected output of this function is a list of contraints you want to apply (or override).  You can be explicit on the behavior and introduce totally new constraints that have even been created on your model, or you can create a hashtable to match contraints on your model and call the **GetConstraints** function to have them generated using the design of the model based constraints (or custom constrains you have previously designed).  
+
+```c#
+public override List<Formula.SimpleRepo.Constraint> ScopedConstraints(List<Formula.SimpleRepo.Constraint> currentConstraints)
+{
+    var constraints = new Hashtable();
+    constraints.Add("UserName", this._userId);
+    return this.GetConstraints(constraints);
+}
+
+```
+
+Example use;
+
+```c#
+var constraints = new Hashtable();
+constraints.Add("Active", true);
+_myRepositoryInstance.Get(constraints);
+```
+
+Will result in all active records, assigned to the currently logged in user, because my repository is limiting the scope by logged in user.
+
+If you wish to temporarily disable the scoped constraints you can call the **RemoveScopedConstraints** on your repository before calling Get.
+
+```c#
+var constraints = new Hashtable();
+constraints.Add("Active", true);
+_myRepositoryInstance.RemoveScopedConstraints().Get(constraints);
+```
+
+This will result in all active records, regardless of the logged in user.
+
+
 
 # Packages / Projects Used
 - [Dapper](https://github.com/StackExchange/Dapper)
