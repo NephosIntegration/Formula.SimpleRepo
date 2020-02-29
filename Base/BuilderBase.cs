@@ -69,12 +69,15 @@ namespace Formula.SimpleRepo
             var scoped = this.ScopedConstraints(finalConstraints);
             var constraints = this.MergeConstraints(finalConstraints, scoped);
 
-            foreach(var constraint in constraints) 
+            if (constraints != null && constraints.Count() > 0)
             {
-                constraint.Bind(this._builder).AsList().ForEach(x => output.Parameters[x.Key] = x.Value);
-            }
+                foreach(var constraint in constraints) 
+                {
+                    constraint.Bind(this._builder).AsList().ForEach(x => output.Parameters[x.Key] = x.Value);
+                }
 
-            output.Sql = this._builder.AddTemplate("/**where**/").RawSql;
+                output.Sql = this._builder.AddTemplate("/**where**/").RawSql;
+            }
 
             return output;
         }
