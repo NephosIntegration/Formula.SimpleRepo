@@ -70,7 +70,13 @@ namespace Formula.SimpleRepo
                                 constraint.DataType = TypeCode.Object;
                                 constraint.Value = constraints[key].ToString();
                                 constraint.Comparison = validConstraint.Comparison;
-                            }
+                                
+                                // If column isn't specified, use the key as the column name
+                                if (String.IsNullOrWhiteSpace(constraint.Column))
+                                {
+                                    constraint.Column = validConstraint.Column;
+                                }
+                            }                            
                         }
 
                         if (constraint == null)

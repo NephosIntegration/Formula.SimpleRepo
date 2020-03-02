@@ -27,6 +27,19 @@ namespace Formula.SimpleRepo
         }    
     }
 
+    public class NoQueryConstraint : Constraint
+    {
+        // Logic scope only, no impact on the database
+        public override Dictionary<String, Object> Bind(Dapper.SqlBuilder builder)
+        {
+            var parameters = new Dictionary<String, Object>();
+
+            parameters.Add("", null);
+
+            return parameters;
+        }
+    }
+
     public class Constraint
     {
         public String Column { get; set; }

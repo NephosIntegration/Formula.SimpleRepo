@@ -153,7 +153,9 @@ _myRepositoryInstance.RemoveScopedConstraints().Get(constraints);
 
 This will result in all active records, regardless of the logged in user.
 
-
+# No Query Constraints
+If you wish to implement business logic constraints that will not impact the query, you can use a combination of scoped query constraints and *NoQueryConstraint* to still be able to receive input from the endpoint, but not have any bindable parameters you wish executed to against the database.
+An example use case might be, based on a users request, you may want to provide a switch for the request, that may or may not require you to supply certain scoped constraints (If I'm and admin and I want to view everything, allow it, otherwise limit the scope by applying a scoped constraint).
 
 # Packages / Projects Used
 - [Dapper](https://github.com/StackExchange/Dapper)
