@@ -81,7 +81,7 @@ namespace Formula.SimpleRepo
 
                         if (constraint == null)
                         {
-                            constraint = new Constraint(validConstraint.Column, validConstraint.DatabaseColumnName, validConstraint.DataType, validConstraint.Nullable, constraints[key].ToString(), Comparison.Equals);
+                            constraint = new Constraint(validConstraint.Column, validConstraint.DatabaseColumnName, validConstraint.DataType, validConstraint.Nullable, constraints[key].ToString(), validConstraint.Comparison);
                         }
 
                         output.Add(constraint);
