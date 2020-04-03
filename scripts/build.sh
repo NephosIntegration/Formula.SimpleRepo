@@ -3,7 +3,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR/..
 
 projectFile=$(ls *.csproj)
-projectName="Formula.SimpleRepo"
+projectName=${projectFile::-7}
 version=$(sed -ne '/Version/{s/.*<Version>\(.*\)<\/Version>.*/\1/p;q;}' <<< cat "$projectFile")
 
 function listCommands() {
@@ -44,7 +44,7 @@ function nuget() {
     cp README.md README.txt
     dotnet pack
     rm README.txt
-    echo "dotnet nuget push $projectName.$version.nupkg -k $apikey -s https://api.nuget.org/v3/index.json"
+    dotnet nuget push ./bin/Debug/$projectName.$version.nupkg -k $apikey -s https://api.nuget.org/v3/index.json
 }
 
 function help() {
