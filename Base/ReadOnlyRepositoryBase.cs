@@ -7,6 +7,10 @@ using System.Threading.Tasks;
 using System.Threading;
 using Microsoft.Extensions.Configuration;
 using System.Data.SqlClient;
+using System.Reflection;
+using System.Collections;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace Formula.SimpleRepo
 {
@@ -26,79 +30,129 @@ namespace Formula.SimpleRepo
             this._connection = new SqlConnection(GetConnectionString());
         }
 
+        protected BasicQueryBase<TModel, TConstraintsModel>  _basicQuery = null;
+        public IBasicQuery<TModel> Basic
+        {
+            get
+            {
+                if (this._basicQuery == null)
+                {
+                    this._basicQuery = new BasicQuery<TModel, TConstraintsModel>(this._config);
+                }
+                return _basicQuery;
+            }
+        }
+
+        public List<String> GetIdFields()
+        {
+            var type = typeof(TModel);
+            var tp = type.GetProperties().Where(p => p.GetCustomAttributes(true).Any(attr => attr.GetType().Name == typeof(KeyAttribute).Name)).ToList();
+            var properties = tp.Any() ? tp : type.GetProperties().Where(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase));
+            return properties.Select(i => i.Name).ToList();
+        }
+
+        public Hashtable GetPopulatedIdFields(object value)
+        {
+            var output = new Hashtable();
+
+            var fields = this.GetIdFields();
+            foreach(var field in fields)
+            {
+                output.Add(field, value);
+            }
+
+            return output;
+        }
+
         protected virtual String GetConnectionString()
         {
             return _config.GetValue<String>($"ConnectionStrings:{_connectionName}");
         }
 
-        public virtual TModel Get(object id, IDbTransaction transaction = null, int? commandTimeout = null)
+        protected IEnumerable<TModel> Get(Bindable bindable, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-			return SimpleCRUD.Get<TModel>(_connection, id, transaction, commandTimeout);
+            return this.Basic.GetList(bindable.Sql, bindable.Parameters, transaction, commandTimeout);
         }
 
-        public virtual Task<TModel> GetAsync(object id, IDbTransaction transaction = null, int? commandTimeout = null)
+        protected Task<IEnumerable<TModel>> GetAsync(Bindable bindable, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-			return SimpleCRUD.GetAsync<TModel>(_connection, id, transaction, commandTimeout);
+            return this.Basic.GetListAsync(bindable.Sql, bindable.Parameters, transaction, commandTimeout);
         }
 
-        public virtual IEnumerable<TModel> GetList()
+        public IEnumerable<TModel> Get(List<Constraint> finalConstraints, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-			return SimpleCRUD.GetList<TModel>(_connection);
+            var results = this.Where(finalConstraints);
+            return this.Get(results, transaction, commandTimeout);
         }
 
-        public virtual IEnumerable<TModel> GetList(string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public Task<IEnumerable<TModel>> GetAsync(List<Constraint> finalConstraints, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-			return SimpleCRUD.GetList<TModel>(_connection, conditions, parameters, transaction, commandTimeout);
+            var results = this.Where(finalConstraints);
+            return this.GetAsync(results, transaction, commandTimeout);
         }
 
-        public virtual IEnumerable<TModel> GetList(object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
+        public IEnumerable<TModel> Get(Hashtable constraints, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-			return SimpleCRUD.GetList<TModel>(_connection, whereConditions, transaction, commandTimeout);
+            var results = this.Where(constraints);
+            return this.Get(results, transaction, commandTimeout);
+        }
+        
+        public Task<IEnumerable<TModel>> GetAsync(Hashtable constraints, IDbTransaction transaction = null, int? commandTimeout = null)
+        {
+            var results = this.Where(constraints);
+            return this.GetAsync(results, transaction, commandTimeout);
         }
 
-        public virtual Task<IEnumerable<TModel>> GetListAsync()
+        public IEnumerable<TModel> Get(JObject json, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-			return SimpleCRUD.GetListAsync<TModel>(_connection);
+            var results = this.Where(json);
+            return this.Get(results, transaction, commandTimeout);
         }
 
-        public virtual Task<IEnumerable<TModel>> GetListAsync(string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public Task<IEnumerable<TModel>> GetAsync(JObject json, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-			return SimpleCRUD.GetListAsync<TModel>(_connection, conditions, parameters, transaction, commandTimeout);
+            var results = this.Where(json);
+            return this.GetAsync(results, transaction, commandTimeout);
         }
 
-        public virtual Task<IEnumerable<TModel>> GetListAsync(object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
+        public IEnumerable<TModel> Get(String json, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-			return SimpleCRUD.GetListAsync<TModel>(_connection, whereConditions, transaction, commandTimeout);
+            var obj = JsonConvert.DeserializeObject<JObject>(json);
+            return this.Get(obj, transaction, commandTimeout);
         }
 
-        public virtual IEnumerable<TModel> GetListPaged(int pageNumber, int rowsPerPage, string conditions, string orderby, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public Task<IEnumerable<TModel>> GetAsync(String json, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-			return SimpleCRUD.GetListPaged<TModel>(_connection, pageNumber, rowsPerPage, conditions, orderby, parameters, transaction, commandTimeout);
+            var obj = JsonConvert.DeserializeObject<JObject>(json);
+            return this.GetAsync(obj, transaction, commandTimeout);
         }
 
-        public virtual Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, string conditions, string orderby, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public TModel Get(object id, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-			return SimpleCRUD.GetListPagedAsync<TModel>(_connection, pageNumber, rowsPerPage, conditions, orderby, parameters, transaction, commandTimeout);
+            var fields = this.GetPopulatedIdFields(id);
+            var bindable = this.Where(fields);
+            var results = this.Get(bindable, transaction, commandTimeout);
+            return results.FirstOrDefault();
         }
 
-        public virtual int RecordCount(string conditions = "", object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public async Task<TModel> GetAsync(object id, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-			return SimpleCRUD.RecordCount<TModel>(_connection, conditions, parameters, transaction, commandTimeout);
+            var fields = this.GetPopulatedIdFields(id);
+            var bindable = this.Where(fields);
+            var results = await this.GetAsync(bindable, transaction, commandTimeout);
+            return results.FirstOrDefault();
         }
 
-        public virtual int RecordCount(object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
+        public IEnumerable<TModel> Get(IDbTransaction transaction = null, int? commandTimeout = null)
         {
-			return SimpleCRUD.RecordCount<TModel>(_connection, whereConditions, transaction, commandTimeout);
+            List<Constraint> nothing = null;
+            return this.Get(nothing, transaction, commandTimeout);
         }
 
-        public virtual Task<int> RecordCountAsync(string conditions = "", object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public Task<IEnumerable<TModel>> GetAsync(IDbTransaction transaction = null, int? commandTimeout = null)
         {
-			return SimpleCRUD.RecordCountAsync<TModel>(_connection, conditions, parameters, transaction, commandTimeout);
-        }
-
-        public virtual Task<int> RecordCountAsync(object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
-        {
-			return SimpleCRUD.RecordCountAsync<TModel>(_connection, whereConditions, transaction, commandTimeout);
+            List<Constraint> nothing = null;
+            return this.GetAsync(nothing, transaction, commandTimeout);
         }
     }
 }

@@ -70,12 +70,18 @@ namespace Formula.SimpleRepo
                                 constraint.DataType = TypeCode.Object;
                                 constraint.Value = constraints[key].ToString();
                                 constraint.Comparison = validConstraint.Comparison;
-                            }
+                                
+                                // If column isn't specified, use the key as the column name
+                                if (String.IsNullOrWhiteSpace(constraint.Column))
+                                {
+                                    constraint.Column = validConstraint.Column;
+                                }
+                            }                            
                         }
 
                         if (constraint == null)
                         {
-                            constraint = new Constraint(validConstraint.Column, validConstraint.DatabaseColumnName, validConstraint.DataType, validConstraint.Nullable, constraints[key].ToString(), Comparison.Equals);
+                            constraint = new Constraint(validConstraint.Column, validConstraint.DatabaseColumnName, validConstraint.DataType, validConstraint.Nullable, constraints[key].ToString(), validConstraint.Comparison);
                         }
 
                         output.Add(constraint);
@@ -89,6 +95,7 @@ namespace Formula.SimpleRepo
         public List<Constraint> GetConstraints(JObject json)
         {
             var hash = new Hashtable();
+
             foreach (var item in json) 
             {
                 hash.Add(item.Key, item.Value.ToString());
