@@ -9,7 +9,17 @@
     <Description>Easy repositories for .Net built on Dapper.</Description>
     <Authors>Joshua Williams</Authors>  
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RepositoryUrl>https://github.com/NephosIntegration/Formula.SimpleRepo</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/NephosIntegration/Formula.SimpleRepo</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="README.txt">
+      <Pack>true</Pack>
+      <PackagePath>README.txt</PackagePath>
+    </Content>
+  </ItemGroup>  
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.0.30" />
