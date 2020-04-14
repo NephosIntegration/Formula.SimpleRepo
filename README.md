@@ -208,6 +208,10 @@ repo.Basic.DeleteList("where yadda yadda...");
 
 ### Step 5 - Advanced Topics
 
+### Custom Contraints
+
+A constraint is anything you want to be able to expose querying for resources by.  By default, you can simply provide the POCO model as the constrainable definition, however, you can also provide custom / dynamic fields to allow your resource models to be constrained by.
+
 You can now start defining new columns on your repository that don't exist as columns in your database, which represent "concepts".  These further allow you to constrain your data.
 
 The implementation of this is explained in implementation details below.  For now, try to understand the concept.  If you can define additional ways to represent a record / resource, you can then begin querying  against it as if it were a column in the database.
@@ -223,17 +227,6 @@ var records = repo.Get(new Hashtable() { { "NearMe", true } });
 ...
 var records = repo.Get(new Hashtable() { { "AtStockPoint", myVariable } });
 ```
-
-You might also only want certain records to be returned based on some certain "scope".  As an example, if the user requesting is an admin versus a non-admin.  For this you can implement scoped constraints (see further below for implementation details).
-
-
-### (Optional) Step 5 - Expose via API
-The [Formula.SimpleAPI](https://github.com/NephosIntegration/Formula.SimpleAPI) project provides utilities to expose your repository as a RESTful API.
-
-----
-
-# Custom Contraints
-A constraint is anything you want to be able to expose querying for resources by.  By default, you can simply provide the POCO model as the constrainable definition, however, you can also provide custom / dynamic fields to allow your resource models to be constrained by.
 
 Example.. 
 
@@ -272,8 +265,9 @@ We can now pass our custom constraints (which include our dynamic custom constra
 public class TodoRepository : RepositoryBase<Todo, TodoConstraints>
 ```
 
-# Scoped Constraints
-Scoped constraints, are contraints that get applied automatically with every request.  These are applied in addition to (and instead of) any contraints applied that might be present.  These are useful for applying default constraints that need to be applied every time, and also as a strategy for limiting the scope of the data returned for security reasons, or other creative business rule purposes.  You can also programatically turn these on and off.
+### Scoped Constraints
+
+You might also only want certain records to be returned based on some certain "scope".  Scoped constraints, are contraints that get applied automatically with every request.  These are applied in addition to (and instead of) any contraints applied that might be present.  These are useful for applying default constraints that need to be applied every time, and also as a strategy for limiting the scope of the data returned for security reasons, or other creative business rule purposes.  You can also programatically turn these on and off.
 
 For example, if I want to limit the scope of data, so that users can only see their data based on their user id, I can apply a scoped constraint.  This way if a request for all data, is made, the server side can limit the results.
 
@@ -312,9 +306,15 @@ _myRepositoryInstance.RemoveScopedConstraints().Get(constraints);
 
 This will result in all active records, regardless of the logged in user.
 
-# No Query Constraints
+### No Query Constraints
+
 If you wish to implement business logic constraints that will not impact the query, you can use a combination of scoped query constraints and *NoQueryConstraint* to still be able to receive input from the endpoint, but not have any bindable parameters you wish executed to against the database.
-An example use case might be, based on a users request, you may want to provide a switch for the request, that may or may not require you to supply certain scoped constraints (If I'm and admin and I want to view everything, allow it, otherwise limit the scope by applying a scoped constraint).
+An example use case might be, based on a users request, you may want to provide a switch for the request, that may or may not require you to supply certain scoped constraints (If I'm and admin and I want to view everything, allow it, otherwise limit the scope by applying a scoped constraint)
+
+### (Optional) Step 5 - Expose via API
+The [Formula.SimpleAPI](https://github.com/NephosIntegration/Formula.SimpleAPI) project provides utilities to expose your repository as a RESTful API.
+
+----
 
 # Packages / Projects Used
 - [Dapper](https://github.com/StackExchange/Dapper)
