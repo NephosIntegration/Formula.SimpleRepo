@@ -1,6 +1,50 @@
 # Formula.SimpleRepo
 Easy repositories for .Net built on Dapper.
 
+## Getting Started
+
+Install the nuget package
+
+```bash
+dotnet add package Formula.SimpleRepo --version 1.0.*
+```
+
+Add a connection to your database (appsettings.json)
+
+```json
+{
+    "ConnectionStrings": {
+        "DefaultConnection": "Server=database.server.com;Database=MyAppDB;User=my_user;Password=my_pw!;MultipleActiveResultSets=true"
+    }
+}
+```
+
+### Special Instructions For Console Applications
+For console applications, enable configuration and dependency injection
+
+```bash
+dotnet add package Microsoft.Extensions.Configuration
+dotnet add package Microsoft.Extensions.Configuration.FileExtensions
+dotnet add package Microsoft.Extensions.Configuration.Json
+```
+
+```c#
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.FileExtensions;
+using Microsoft.Extensions.Configuration.Json;
+using Microsoft.Extensions.DependencyInjection;
+
+...
+var config = new ConfigurationBuilder()
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile("appsettings.json", true, true)
+        .Build();
+
+var services = new ServiceCollection();
+services.AddSingleton<IConfiguration>(config)
+        .BuildServiceProvider();
+```
+
 ## Creating a repository
 
 ### Step 1 - Create a model
@@ -35,7 +79,7 @@ namespace MyApi.Data.Models
 }
 ```
 
-## Step 2 - Create a Repository
+### Step 2 - Create a Repository
 
 The repository provides simple CRUD operations ( provided by [Dapper.SimpleCRUD](https://github.com/ericdc1/Dapper.SimpleCRUD/) ), simple *constrainable* operations (query by JSON), as well as a single place to wrap business concepts into data fetch / store operations by custom function you provide.
 
@@ -59,19 +103,134 @@ namespace MyApi.Data.Repositories
 }
 ```
 
-## (Optional) Step 3 - Expose via API
-The [Formula.SimpleAPI](https://github.com/NephosIntegration/Formula.SimpleAPI) project provides utilities to expose your repository as a RESTful API.
+### Registering Repositories
 
-
-## Registering Repositories
 Repositories can be registered into the depencey injection system by implementing a couple steps.  In the **ConfigureServices** section of **Startup.cs** make sure to make a call to **AddRepositories**.  Failing to do so will result in controllers depending on these respositories bing unable to resolve service for these repository types.
 
 ```c#
 using Formula.SimpleRepo;
+...
 services.AddRepositories();
 ```
 
 All repositories decorated with the [Repo] attribute will be injected.
+
+
+### Step 3 - Work with data
+
+Now you can perform all queries and CRUD operations against the models.
+For dynamic / business defined constrainables see further steps below.
+But you now have enough to perform basic operations against your data.
+
+Example...
+
+```c#
+var repo = new TodoRepository(config);
+foreach(var item in repo.Get())
+{
+    Console.WriteLine(item.Details);
+}
+```
+
+#### What can you do?
+
+**Read Operations**
+
+There are async versions of all methods.
+
+***Get / GetAsync**- Fetch data*
+
+```c#
+// Get a single item by it's ID
+var record = repo.Get(21); // Can be number or GUID
+
+// Get all records
+var records = repo.Get();
+
+// Get by specific fields using JSON to define your constraints
+records = repo.Get("{Completed:true}"); 
+
+// Get by hash table
+records = repo.Get(new Hashtable() { { "Completed", true } });
+
+// Additional methods like fetching via JObject, Bindable (advanced concept), etc..
+
+// Get a list of all the identity columns
+var idFields = repo.GetIdFields();
+
+
+// You also have access to other operations provided by SimpleCRUD via the Basic property
+// These do not apply non database / dynamic constrainable concepts described below
+records = repo.Basic.GetList("where column_name like '%asdf%'");
+
+var pagedData = repo.Basic.GetListPaged(1, 10, "where column_a = 'asdf'");
+
+var recordCount = repo.Basic.RecordCount("where column_name like '%asdf%'");
+
+// etc...
+```
+
+**Dapper.SimpleCRUD**
+You still have access to all the dapper SimpleCRUD you are used too.
+
+
+**CRUD Operations**
+
+Like above, there are async versions of all methods.
+
+```c#
+// Delete
+repo.Delete(21); // Can be number or GUID
+
+// Insert
+var modelToSave = new Todo() {
+    Details = "Do a backflip",
+    Completed = false,
+};
+
+var newId = repo.Insert(modelToSave);
+
+// Update
+var modelToSave = new Todo() {
+    Id = 21,
+    Details = "Do a backflip",
+    Completed = true,
+};
+
+repo.Update(modelToSave);
+
+// Like with the basic query operations, you also still have access to other basic
+// operations that don't apply to the constrainable types.
+
+repo.Basic.DeleteList("where yadda yadda...");
+
+```
+
+### Step 5 - Advanced Topics
+
+You can now start defining new columns on your repository that don't exist as columns in your database, which represent "concepts".  These further allow you to constrain your data.
+
+The implementation of this is explained in implementation details below.  For now, try to understand the concept.  If you can define additional ways to represent a record / resource, you can then begin querying  against it as if it were a column in the database.
+
+Consider that you have a date column, you might want to be able to fetch records that have dates in the past or in the future, or in the past, or other concepts which are hard to express without coding logic (paydays, near me geographically, if certain things exist on file systems, etc..).  You can implement concepts that depend on other criteria outside of things which can be expressed in your database.
+
+For things like this, adding custom constraints are the solution.
+
+```c#
+var records = repo.Get(new Hashtable() { { "FutureRecords", true } });
+...
+var records = repo.Get(new Hashtable() { { "NearMe", true } });
+...
+var records = repo.Get(new Hashtable() { { "AtStockPoint", myVariable } });
+```
+
+You might also only want certain records to be returned based on some certain "scope".  As an example, if the user requesting is an admin versus a non-admin.  For this you can implement scoped constraints (see further below for implementation details).
+
+
+### (Optional) Step 5 - Expose via API
+The [Formula.SimpleAPI](https://github.com/NephosIntegration/Formula.SimpleAPI) project provides utilities to expose your repository as a RESTful API.
+
+----
 
 # Custom Contraints
 A constraint is anything you want to be able to expose querying for resources by.  By default, you can simply provide the POCO model as the constrainable definition, however, you can also provide custom / dynamic fields to allow your resource models to be constrained by.
