@@ -323,7 +323,7 @@ Constraints are treated as "IS NULL" in one of 3 ways.
 
 In each case a constraint that is determined to be null will produce **"WHERE x IS NULL"**.
 
-To explicitly set a constraint to null, use leave the value null.
+To explicitly set a constraint to null, leave the value null.
 
 ```c#
 constraints.Add("MyValue", null);
@@ -335,13 +335,12 @@ To Verbosely set a constraint to null, use the word `NULL` as a string.
 constraints.Add("MyValue", "NULL");
 ```
 
-The implicitly / assume null is a programatic decision within the library.  So this is the least desirable means of producing a null constraint.  
+The implicitly / assumed null is a programatic decision within the library.  So this is the least desirable means of producing a null constraint.  
 If a value is considered to be `empty` for a datatype that doesn't support empty *(such as strings)*, it will be assumed this is to be a null constraint.
 
 ```c#
-constraints.Add("MyValue", ""); // Where MyValue is an int
+constraints.Add("MyValue", ""); // Where MyValue is an int and "" is an empty value
 ```
-
 
 ### (Optional) Step 5 - Expose via API
 The [Formula.SimpleAPI](https://github.com/NephosIntegration/Formula.SimpleAPI) project provides utilities to expose your repository as a RESTful API.
