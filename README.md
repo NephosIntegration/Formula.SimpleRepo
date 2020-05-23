@@ -311,6 +311,38 @@ This will result in all active records, regardless of the logged in user.
 If you wish to implement business logic constraints that will not impact the query, you can use a combination of scoped query constraints and *NoQueryConstraint* to still be able to receive input from the endpoint, but not have any bindable parameters you wish executed to against the database.
 An example use case might be, based on a users request, you may want to provide a switch for the request, that may or may not require you to supply certain scoped constraints (If I'm and admin and I want to view everything, allow it, otherwise limit the scope by applying a scoped constraint)
 
+### NULL constraints
+
+Constraints are treated as "IS NULL" in one of 3 ways.
+
+* Explicitly
+* Verbosely
+* Implicitly / Assumed
+
+> See the `IsNullComparison` function in `Constriant.cs` for implementation.
+
+In each case a constraint that is determined to be null will produce **"WHERE x IS NULL"**.
+
+To explicitly set a constraint to null, use leave the value null.
+
+```c#
+constraints.Add("MyValue", null);
+```
+
+To Verbosely set a constraint to null, use the word `NULL` as a string.
+
+```c#
+constraints.Add("MyValue", "NULL");
+```
+
+The implicitly / assume null is a programatic decision within the library.  So this is the least desirable means of producing a null constraint.  
+If a value is considered to be `empty` for a datatype that doesn't support empty *(such as strings)*, it will be assumed this is to be a null constraint.
+
+```c#
+constraints.Add("MyValue", ""); // Where MyValue is an int
+```
+
+
 ### (Optional) Step 5 - Expose via API
 The [Formula.SimpleAPI](https://github.com/NephosIntegration/Formula.SimpleAPI) project provides utilities to expose your repository as a RESTful API.
 
