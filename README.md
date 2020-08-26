@@ -79,6 +79,19 @@ namespace MyApi.Data.Models
 }
 ```
 
+SqlServer is treated as the default connection type, but you can alter the database used (any `IDbConnection` implementation), as well as the dialect details in the `ConnectionDetails` attribute.
+
+```c#
+    [ConnectionDetails("DefaultConnection", typeof(DB2Connection), Dapper.SimpleCRUD.Dialect.PostgreSQL)]
+    [Table("MY_WEIRD_TABLE", Schema="MY_SCHEMA")]
+    public class MyNormalModel
+    {
+        [Dapper.Key]
+        [Column("ABC#")]
+        public int Id { get; set; }
+    }
+```
+
 ### Step 2 - Create a Repository
 
 The repository provides simple CRUD operations ( provided by [Dapper.SimpleCRUD](https://github.com/ericdc1/Dapper.SimpleCRUD/) ), simple *constrainable* operations (query by JSON), as well as a single place to wrap business concepts into data fetch / store operations by custom function you provide.
@@ -105,7 +118,11 @@ namespace MyApi.Data.Repositories
 
 ### Registering Repositories
 
-Repositories can be registered into the depencey injection system by implementing a couple steps.  In the **ConfigureServices** section of **Startup.cs** make sure to make a call to **AddRepositories**.  Failing to do so will result in controllers depending on these respositories bing unable to resolve service for these repository types.
+Repositories can be registered into the depencey injection system by implementing a couple steps.  In the **ConfigureServices** section of **Startup.cs** make sure to make a call to **AddRepositories**.  Failing to do so will result in controllers depending on these respositories being unable to resolve service for these repository types. 
+
+*InvalidOperationException: Unable to resolve service for type '...' while attempting to activate '...'.*
+
+All repositories in your project, decorated with the [Repo] attribute will be injected.
 
 ```c#
 using Formula.SimpleRepo;
@@ -113,7 +130,20 @@ using Formula.SimpleRepo;
 services.AddRepositories();
 ```
 
-All repositories decorated with the [Repo] attribute will be injected.
+If your repositories exists in a different project / library / assembly, you can either specify the assembly directly;
+
+```c#
+// var repoAssembly = <some function to determine the assembly>
+services.AddRepositories(repoAssembly);
+```
+
+Or you can pass just one example repository, and the rest will be found.
+
+```c#
+services.AddRepositories(typeof(MyOtherProject.Data.MyRepository));
+```
+
+> **Note** - If using this strategy, you do not need to add each new repository, you only have to decorate them with the [Repo] annotation.
 
 
 ### Step 3 - Work with data

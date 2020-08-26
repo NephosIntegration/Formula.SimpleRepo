@@ -25,7 +25,7 @@ namespace Formula.SimpleRepo
         {
             this._config = config;
             this._connectionName = ConnectionDetails.GetConnectionName<TModel>();
-            this._connection = new SqlConnection(GetConnectionString());
+            this._connection = ConnectionDetails.GetConnection<TModel>(GetConnectionString());
         }
 
         protected virtual String GetConnectionString()
