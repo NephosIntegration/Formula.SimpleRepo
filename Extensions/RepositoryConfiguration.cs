@@ -8,11 +8,8 @@ namespace Formula.SimpleRepo
 {
     public static class RepositoryConfiguration
     {
-        public static IEnumerable<Type> GetRepositoryList()
+        public static IEnumerable<Type> GetRepositoryList(Assembly assembly)
         {
-            //var assembly = Assembly.GetExecutingAssembly();
-            var assembly = Assembly.GetEntryAssembly();
-
             var repos = 
             from type in assembly.GetTypes()
             where type.IsDefined(typeof(Repo), false)
@@ -21,9 +18,26 @@ namespace Formula.SimpleRepo
             return repos;
         }
 
-        public static IServiceCollection AddRepositories(this IServiceCollection services) 
+        public static IServiceCollection AddRepositories(this IServiceCollection services, Type repositoryAssemblyType = null)
         {
-            foreach(var type in RepositoryConfiguration.GetRepositoryList())
+            Assembly assembly = null;
+
+            if (repositoryAssemblyType == null)
+            {
+                //assembly = Assembly.GetExecutingAssembly();
+                assembly = Assembly.GetEntryAssembly();
+            }
+            else
+            {
+                assembly = repositoryAssemblyType.GetTypeInfo().Assembly;
+            }
+            
+            return RepositoryConfiguration.AddRepositories(services, assembly);
+        }
+
+        public static IServiceCollection AddRepositories(this IServiceCollection services, Assembly assembly)
+        {
+            foreach(var type in RepositoryConfiguration.GetRepositoryList(assembly))
             {
                 services.AddScoped(type);
             }
