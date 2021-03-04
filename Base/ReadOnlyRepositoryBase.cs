@@ -14,8 +14,8 @@ using Newtonsoft.Json;
 
 namespace Formula.SimpleRepo
 {
-    public abstract class ReadOnlyRepositoryBase<TModel, TConstraintsModel> 
-        : BuilderBase<TConstraintsModel>, IReadOnlyRepository<TModel> 
+    public abstract class ReadOnlyRepositoryBase<TModel, TConstraintsModel>
+        : BuilderBase<TConstraintsModel>, IReadOnlyRepository<TModel>
         where TModel : class
         where TConstraintsModel : new()
     {
@@ -30,7 +30,7 @@ namespace Formula.SimpleRepo
             this._connection = ConnectionDetails.GetConnection<TModel>(GetConnectionString());
         }
 
-        protected BasicQueryBase<TModel, TConstraintsModel>  _basicQuery = null;
+        protected BasicQueryBase<TModel, TConstraintsModel> _basicQuery = null;
         public IBasicQuery<TModel> Basic
         {
             get
@@ -56,7 +56,7 @@ namespace Formula.SimpleRepo
             var output = new Hashtable();
 
             var fields = this.GetIdFields();
-            foreach(var field in fields)
+            foreach (var field in fields)
             {
                 output.Add(field, value);
             }
@@ -79,6 +79,11 @@ namespace Formula.SimpleRepo
             return this.Basic.GetListAsync(bindable.Sql, bindable.Parameters, transaction, commandTimeout);
         }
 
+        protected Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, Bindable bindable, string orderby, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        {
+            return this.Basic.GetListPagedAsync(pageNumber, rowsPerPage, bindable.Sql, orderby, bindable.Parameters, transaction, commandTimeout);
+        }
+
         public IEnumerable<TModel> Get(List<Constraint> finalConstraints, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var results = this.Where(finalConstraints);
@@ -96,11 +101,17 @@ namespace Formula.SimpleRepo
             var results = this.Where(constraints);
             return this.Get(results, transaction, commandTimeout);
         }
-        
+
         public Task<IEnumerable<TModel>> GetAsync(Hashtable constraints, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var results = this.Where(constraints);
             return this.GetAsync(results, transaction, commandTimeout);
+        }
+
+        public Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, Hashtable constraints, string orderBy, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        {
+            var results = this.Where(constraints);
+            return this.GetListPagedAsync(pageNumber, rowsPerPage, results, orderBy, parameters, transaction, commandTimeout);
         }
 
         public IEnumerable<TModel> Get(JObject json, IDbTransaction transaction = null, int? commandTimeout = null)
