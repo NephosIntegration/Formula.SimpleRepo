@@ -113,6 +113,22 @@ namespace Formula.SimpleRepo
             var results = this.Where(constraints);
             return this.GetListPagedAsync(pageNumber, rowsPerPage, results, orderBy, parameters, transaction, commandTimeout);
         }
+        public Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, List<Constraint> constraints, string orderBy, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        {
+            var results = this.Where(constraints);
+            return this.GetListPagedAsync(pageNumber, rowsPerPage, results, orderBy, parameters, transaction, commandTimeout);
+        }
+
+        public Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, JObject constraints, string orderBy, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        {
+            var results = this.Where(constraints);
+            return this.GetListPagedAsync(pageNumber, rowsPerPage, results, orderBy, parameters, transaction, commandTimeout);
+        }
+        public Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, string json, string orderBy, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        {
+            var obj = JsonConvert.DeserializeObject<JObject>(json);
+            return this.GetListPagedAsync(pageNumber, rowsPerPage, obj, orderBy, parameters, transaction, commandTimeout);
+        }
 
         public IEnumerable<TModel> Get(JObject json, IDbTransaction transaction = null, int? commandTimeout = null)
         {
