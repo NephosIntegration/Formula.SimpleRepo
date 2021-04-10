@@ -1,7 +1,7 @@
 # Formula.SimpleRepo
 Easy repositories for .Net built on Dapper.
 
-## Getting Started
+# Getting Started
 
 Install the nuget package
 
@@ -19,7 +19,7 @@ Add a connection to your database (appsettings.json)
 }
 ```
 
-### Special Instructions For Console Applications
+## Special Instructions For Console Applications
 For console applications, enable configuration and dependency injection
 
 ```bash
@@ -45,9 +45,9 @@ services.AddSingleton<IConfiguration>(config)
         .BuildServiceProvider();
 ```
 
-## Creating a repository
+# Creating a repository
 
-### Step 1 - Create a model
+## Step 1 - Create a model
 
 The model represents a single record mapping between a table or view on your datasource and a POCO (plain old c# object) for use within your application.
 
@@ -92,7 +92,59 @@ SqlServer is treated as the default connection type, but you can alter the datab
     }
 ```
 
-### Step 2 - Create a Repository
+### Using Table Functions
+
+The models can take a table, a view, or a table function.  If you specify a table function you have a few options for providing the data necessary for the table function parameters.  You can specify the parameter references within the `TableAttribute` as follows.
+
+```c#
+[ConnectionDetails("DefaultConnection", typeof(DB2Connection), Dapper.SimpleCRUD.Dialect.PostgreSQL)]
+[Table("TABLE_FUNCTION", Schema="MY_SCHEMA", Parameters=new string[] {"Param1", "Param2"})]
+public class TableFunctionModel
+{
+    [Column("COLUMNA")]
+    public int FriendlyNameA { get; set; }
+
+    [Column("COLUMNB")]
+    public string FriendlyNameB { get; set; }
+}
+```
+
+These will be translated as parameters in the raw query used against the database.
+
+```sql
+Select "COLUMNA" as "FriendlyNameA" from Table("MY_SCHEMA"."TABLEFUNCTION"(@Param1, @Param2)) WHERE "COLUMNA" = @FriendlyNameA AND "COLUMNB" = @FriendlyNameB
+```
+
+The values for the parameters can be specified in 1 of two ways.  They can be fashioned in such a way that they will be provided by constraints.
+
+```c#
+[Table("TABLE_FUNCTION", Schema="MY_SCHEMA", Parameters=new string[] {"FriendlyNameA", "FriendlyNameB"})]
+```
+
+In a situation like this, nothing futher needs to happen other than to make sure the required constraints are in fact provided to the repository.
+
+> **Note** - When using this method use the friendly name, not the actual column name.
+
+```c#
+var constraints = new Hashtable() { { "FriendlyNameA", 1234 }, { "FriendlyNameB", "abc" } };
+var results = await _repository.GetAsync(constraints);
+```
+
+Othewise, you can specify the parameters on the list of repository parameters.
+
+```c#
+[Table("TABLE_FUNCTION", Schema="MY_SCHEMA", Parameters=new string[] {"Param1", "Param2"})]
+```
+
+```c#
+_repository.AddParameter("Param1", 1234);
+_repository.AddParameter("Param2", "abc");
+var results = await _repository.GetAsync();
+```
+
+> **Note** - In a situation like this, use a unique parameter, otherwise, the parameter you supply to the repository will override any that match the parameter name later.
+
+## Step 2 - Create a Repository
 
 The repository provides simple CRUD operations ( provided by [Dapper.SimpleCRUD](https://github.com/ericdc1/Dapper.SimpleCRUD/) ), simple *constrainable* operations (query by JSON), as well as a single place to wrap business concepts into data fetch / store operations by custom function you provide.
 
@@ -116,7 +168,7 @@ namespace MyApi.Data.Repositories
 }
 ```
 
-### Registering Repositories
+## Registering Repositories
 
 Repositories can be registered into the depencey injection system by implementing a couple steps.  In the **ConfigureServices** section of **Startup.cs** make sure to make a call to **AddRepositories**.  Failing to do so will result in controllers depending on these respositories being unable to resolve service for these repository types. 
 
@@ -146,7 +198,7 @@ services.AddRepositories(typeof(MyOtherProject.Data.MyRepository));
 > **Note** - If using this strategy, you do not need to add each new repository, you only have to decorate them with the [Repo] annotation.
 
 
-### Step 3 - Work with data
+## Step 3 - Work with data
 
 Now you can perform all queries and CRUD operations against the models.
 For dynamic / business defined constrainables see further steps below.
@@ -162,7 +214,7 @@ foreach(var item in repo.Get())
 }
 ```
 
-#### What can you do?
+## What can you do?
 
 **Read Operations**
 
@@ -236,9 +288,9 @@ repo.Basic.DeleteList("where yadda yadda...");
 
 ```
 
-### Step 5 - Advanced Topics
+## Step 5 - Advanced Topics
 
-### Custom Contraints
+## Custom Contraints
 
 A constraint is anything you want to be able to expose querying for resources by.  By default, you can simply provide the POCO model as the constrainable definition, however, you can also provide custom / dynamic fields to allow your resource models to be constrained by.
 
@@ -295,7 +347,7 @@ We can now pass our custom constraints (which include our dynamic custom constra
 public class TodoRepository : RepositoryBase<Todo, TodoConstraints>
 ```
 
-### Scoped Constraints
+## Scoped Constraints
 
 You might also only want certain records to be returned based on some certain "scope".  Scoped constraints, are contraints that get applied automatically with every request.  These are applied in addition to (and instead of) any contraints applied that might be present.  These are useful for applying default constraints that need to be applied every time, and also as a strategy for limiting the scope of the data returned for security reasons, or other creative business rule purposes.  You can also programatically turn these on and off.
 
@@ -336,12 +388,12 @@ _myRepositoryInstance.RemoveScopedConstraints().Get(constraints);
 
 This will result in all active records, regardless of the logged in user.
 
-### No Query Constraints
+## No Query Constraints
 
 If you wish to implement business logic constraints that will not impact the query, you can use a combination of scoped query constraints and *NoQueryConstraint* to still be able to receive input from the endpoint, but not have any bindable parameters you wish executed to against the database.
 An example use case might be, based on a users request, you may want to provide a switch for the request, that may or may not require you to supply certain scoped constraints (If I'm and admin and I want to view everything, allow it, otherwise limit the scope by applying a scoped constraint)
 
-### NULL constraints
+## NULL constraints
 
 Constraints are treated as "IS NULL" in one of 3 ways.
 
@@ -372,7 +424,7 @@ If a value is considered to be `empty` for a datatype that doesn't support empty
 constraints.Add("MyValue", ""); // Where MyValue is an int and "" is an empty value
 ```
 
-### (Optional) Step 5 - Expose via API
+## (Optional) Step 5 - Expose via API
 The [Formula.SimpleAPI](https://github.com/NephosIntegration/Formula.SimpleAPI) project provides utilities to expose your repository as a RESTful API.
 
 ----

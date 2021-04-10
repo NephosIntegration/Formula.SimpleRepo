@@ -25,6 +25,7 @@ namespace Dapper
         private static string _encapsulation;
         private static string _getIdentitySql;
         private static string _getPagedListSql;
+        private static string _tableFunctionSql;
 
         private static readonly ConcurrentDictionary<Type, string> TableNames = new ConcurrentDictionary<Type, string>();
         private static readonly ConcurrentDictionary<string, string> ColumnNames = new ConcurrentDictionary<string, string>();
@@ -78,30 +79,35 @@ namespace Dapper
                     _encapsulation = "\"{0}\"";
                     _getIdentitySql = string.Format("SELECT LASTVAL() AS id");
                     _getPagedListSql = "Select {SelectColumns} from {TableName} {WhereClause} Order By {OrderBy} LIMIT {RowsPerPage} OFFSET (({PageNumber}-1) * {RowsPerPage})";
+                    _tableFunctionSql = "{TableName} ({TableParams})";
                     break;
                 case Dialect.SQLite:
                     _dialect = Dialect.SQLite;
                     _encapsulation = "\"{0}\"";
                     _getIdentitySql = string.Format("SELECT LAST_INSERT_ROWID() AS id");
                     _getPagedListSql = "Select {SelectColumns} from {TableName} {WhereClause} Order By {OrderBy} LIMIT {RowsPerPage} OFFSET (({PageNumber}-1) * {RowsPerPage})";
+                    _tableFunctionSql = "{TableName}({TableParams})";
                     break;
                 case Dialect.MySQL:
                     _dialect = Dialect.MySQL;
                     _encapsulation = "`{0}`";
                     _getIdentitySql = string.Format("SELECT LAST_INSERT_ID() AS id");
                     _getPagedListSql = "Select {SelectColumns} from {TableName} {WhereClause} Order By {OrderBy} LIMIT {Offset},{RowsPerPage}";
+                    _tableFunctionSql = "{TableName}({TableParams})";
                     break;
                 case Dialect.DB2:
                     _dialect = Dialect.DB2;
                     _encapsulation = "\"{0}\"";
                     _getIdentitySql = string.Format("SELECT CAST(IDENTITY_VAL_LOCAL() AS DEC(31,0)) AS \"id\" FROM SYSIBM.SYSDUMMY1");
                     _getPagedListSql = "Select * from (Select {SelectColumns}, row_number() over(order by {OrderBy}) as PagedNumber from {TableName} {WhereClause} Order By {OrderBy}) as t where t.PagedNumber between (({PageNumber}-1) * {RowsPerPage} + 1) AND ({PageNumber} * {RowsPerPage})";
+                    _tableFunctionSql = "Table({TableName}({TableParams}))";
                     break;
                 default:
                     _dialect = Dialect.SQLServer;
                     _encapsulation = "[{0}]";
                     _getIdentitySql = string.Format("SELECT CAST(SCOPE_IDENTITY()  AS BIGINT) AS [id]");
                     _getPagedListSql = "SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY {OrderBy}) AS PagedNumber, {SelectColumns} FROM {TableName} {WhereClause}) AS u WHERE PagedNumber BETWEEN (({PageNumber}-1) * {RowsPerPage} + 1) AND ({PageNumber} * {RowsPerPage})";
+                    _tableFunctionSql = "{TableName}({TableParams})";
                     break;
             }
         }
@@ -960,6 +966,7 @@ namespace Dapper
         {
             return string.Format(_encapsulation, databaseword);
         }
+
         /// <summary>
         /// Generates a GUID based on the current date/time
         /// http://stackoverflow.com/questions/1752004/sequential-guid-generator-c-sharp
@@ -1005,16 +1012,7 @@ namespace Dapper
         {
             public virtual string ResolveTableName(Type type)
             {
-                string tableName;
-
-                if (GetDialect() == Dialect.DB2.ToString())
-                {
-                    tableName = type.Name;
-                }
-                else
-                {
-                    tableName = Encapsulate(type.Name);
-                }
+                var tableName = Encapsulate(type.Name);
 
                 var tableattr = type.GetCustomAttributes(true).SingleOrDefault(attr => attr.GetType().Name == typeof(TableAttribute).Name) as dynamic;
                 if (tableattr != null)
@@ -1026,6 +1024,17 @@ namespace Dapper
                         {
                             string schemaName = Encapsulate(tableattr.Schema);
                             tableName = String.Format("{0}.{1}", schemaName, tableName);
+                        }
+
+                        if (tableattr.Parameters != null && tableattr.Parameters.Length > 0)
+                        {
+                            tableName = _tableFunctionSql.Replace("{TableName}", tableName);
+                            var parameterized = new List<string>();
+                            foreach(var parameter in tableattr.Parameters)
+                            {
+                                parameterized.Add($"@{parameter}");
+                            }
+                            tableName = tableName.Replace("{TableParams}", String.Join(",", parameterized));
                         }
                     }
                     catch (RuntimeBinderException)
@@ -1042,16 +1051,7 @@ namespace Dapper
         {
             public virtual string ResolveColumnName(PropertyInfo propertyInfo)
             {
-                string columnName;
-
-                if (GetDialect() == Dialect.DB2.ToString())
-                {
-                    columnName = propertyInfo.Name;
-                }
-                else
-                {
-                    columnName = Encapsulate(propertyInfo.Name);
-                }
+                string columnName = Encapsulate(propertyInfo.Name);
 
                 var columnattr = propertyInfo.GetCustomAttributes(true).SingleOrDefault(attr => attr.GetType().Name == typeof(ColumnAttribute).Name) as dynamic;
                 if (columnattr != null)
@@ -1088,6 +1088,12 @@ namespace Dapper
         /// Name of the schema
         /// </summary>
         public string Schema { get; set; }
+
+        /// <summary>
+        /// Parameters for table functions
+        /// </summary>
+        /// <value></value>
+        public String[] Parameters { get; set; }
     }
 
     /// <summary>

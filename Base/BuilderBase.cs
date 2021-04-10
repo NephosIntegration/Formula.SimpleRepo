@@ -15,6 +15,8 @@ namespace Formula.SimpleRepo
     {
         protected SqlBuilder _builder = new SqlBuilder();
 
+        protected Dictionary<String, Object> _parameters { get; set; } = new Dictionary<String, Object>();
+
         protected Boolean _applyScopedConstraints = true; // By default, if we have any scoped constraints they will be applied
         public ConstrainableBase<TConstraintsModel> ApplyScopedConstraints()
         {
@@ -62,6 +64,50 @@ namespace Formula.SimpleRepo
             return output;
         }
 
+        /// <summary>
+        /// Add a global parameter to be applied at the end
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="value"></param>
+        public void AddParameter(String name, Object value)
+        {
+            this._parameters.Add(name, value);
+        }
+
+        /// <summary>
+        /// Give an opportunity for global builder parameters to be applied
+        /// </summary>
+        /// <param name="bindable"></param>
+        /// <returns></returns>
+        protected Bindable CombineParameters(Bindable bindable)
+        {
+            // If we have any global parameters to apply
+            if (this._parameters != null && this._parameters.Count() > 0)
+            {
+                if (bindable.Parameters == null || bindable.Parameters.Count() == 0)
+                {
+                    bindable.Parameters = this._parameters;
+                }
+                else
+                {
+                    foreach(var entry in this._parameters)
+                    {
+                        // If this key already exists, replace it, else add it
+                        if (bindable.Parameters.ContainsKey(entry.Key))
+                        {
+                            bindable.Parameters[entry.Key] = entry.Value;
+                        }
+                        else
+                        {
+                            bindable.Parameters.Add(entry.Key, entry.Value);
+                        }
+                    }
+                }
+            }
+
+            return bindable;
+        }
+
         public Bindable Where(List<Constraint> finalConstraints)
         {
             var output = new Bindable();
@@ -79,7 +125,7 @@ namespace Formula.SimpleRepo
                 output.Sql = this._builder.AddTemplate("/**where**/").RawSql;
             }
 
-            return output;
+            return this.CombineParameters(output);
         }
 
         public Bindable Where(Hashtable constraints)

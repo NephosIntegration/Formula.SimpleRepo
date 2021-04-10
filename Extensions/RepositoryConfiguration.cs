@@ -39,7 +39,8 @@ namespace Formula.SimpleRepo
         {
             foreach(var type in RepositoryConfiguration.GetRepositoryList(assembly))
             {
-                services.AddScoped(type);
+                // services.AddScoped(type);
+                services.AddTransient(type);
             }
 
             return services;
