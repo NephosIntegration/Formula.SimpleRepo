@@ -10,11 +10,9 @@ namespace Formula.SimpleRepo
     {
         public static IEnumerable<Type> GetRepositoryList(Assembly assembly)
         {
-            var repos =
-            from type in assembly.GetTypes()
-            where type.IsDefined(typeof(Repo), false)
-            select type;
-
+            var repos = assembly.GetExportedTypes()
+                                .Where(e => e.IsDefined(typeof(Repo), false))
+                                .ToList();
             return repos;
         }
 
