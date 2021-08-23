@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Formula.SimpleRepo
 {
-    public enum Comparison 
+    public enum Comparison
     {
         Equals = 0,
         Null = 1,
@@ -11,11 +11,11 @@ namespace Formula.SimpleRepo
 
     public static class ConstraintExtensions
     {
-        public static Constraint GetByColumn(this List<Constraint> constraints, String column)
+        public static Constraint GetByColumn(this List<Constraint> constraints, string column)
         {
             Constraint output = null;
 
-            foreach(var item in constraints)
+            foreach (var item in constraints)
             {
                 if (item.Column.Equals(column, StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -25,15 +25,15 @@ namespace Formula.SimpleRepo
             }
 
             return output;
-        }    
+        }
     }
 
     public class NoQueryConstraint : Constraint
     {
         // Logic scope only, no impact on the database
-        public override Dictionary<String, Object> Bind(Dapper.SqlBuilder builder)
+        public override Dictionary<string, object> Bind(Dapper.SqlBuilder builder)
         {
-            var parameters = new Dictionary<String, Object>();
+            var parameters = new Dictionary<string, object>();
 
             parameters.Add("", null);
 
@@ -43,27 +43,27 @@ namespace Formula.SimpleRepo
 
     public class Constraint
     {
-        public String Column { get; set; }
-        public String DatabaseColumnName { get; set; }
-        public Object Value { get; set; }
+        public string Column { get; set; }
+        public string DatabaseColumnName { get; set; }
+        public object Value { get; set; }
         public TypeCode DataType { get; set; }
-        public Boolean Nullable { get; set; }
+        public bool Nullable { get; set; }
         public Comparison Comparison { get; set; }
 
 
         public Constraint()
         {
-            this.Comparison = Comparison.Equals;
+            Comparison = Comparison.Equals;
         }
 
-        public Constraint(String column, String databaseColumnName, TypeCode dataType, Boolean nullable = false, Object value = null, Comparison comparison = Comparison.Equals)
+        public Constraint(string column, string databaseColumnName, TypeCode dataType, bool nullable = false, object value = null, Comparison comparison = Comparison.Equals)
         {
-            this.Column = column;
-            this.DatabaseColumnName = databaseColumnName;
-            this.DataType = dataType;
-            this.Nullable = nullable;
-            this.Value = value;
-            this.Comparison = comparison;
+            Column = column;
+            DatabaseColumnName = databaseColumnName;
+            DataType = dataType;
+            Nullable = nullable;
+            Value = value;
+            Comparison = comparison;
         }
 
         /// <summary>
@@ -71,7 +71,7 @@ namespace Formula.SimpleRepo
         /// </summary>
         /// <param name="dataType"></param>
         /// <returns>True if the data type allows empty values</returns>
-        private Boolean DataTypeAllowsEmpty(TypeCode dataType)
+        private bool DataTypeAllowsEmpty(TypeCode dataType)
         {
             var emptyTypes = new List<TypeCode> {
                 TypeCode.Empty,
@@ -85,13 +85,13 @@ namespace Formula.SimpleRepo
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        private Boolean EmptyValue(Object value)
+        private bool EmptyValue(object value)
         {
             var empty = (value == null);
 
             if (!empty)
             {
-                empty = String.IsNullOrEmpty(value.ToString());
+                empty = string.IsNullOrEmpty(value.ToString());
             }
 
             return empty;
@@ -101,15 +101,15 @@ namespace Formula.SimpleRepo
         /// Determines if the intent of this query is to search for null values
         /// </summary>
         /// <returns></returns>
-        private Boolean IsNullComparison()
+        private bool IsNullComparison()
         {
-            var isNull = (this.Value == null);
-            String stringValue = null;
+            var isNull = (Value == null);
+            string stringValue = null;
 
             // If it wasn't explicitely null, we need to check for a verbose null
             if (!isNull)
             {
-                stringValue = this.Value.ToString();
+                stringValue = Value.ToString();
                 isNull = "NULL".Equals(stringValue.ToUpper());
             }
 
@@ -120,20 +120,20 @@ namespace Formula.SimpleRepo
                 // But the value being supplied be empty.
                 // The reason for this, is some data types support concepts of "empty"
                 // which is not the same as null.. Consider strings.. "" != null
-                isNull = (this.EmptyValue(stringValue) && this.DataTypeAllowsEmpty(this.DataType) == false);
+                isNull = (EmptyValue(stringValue) && DataTypeAllowsEmpty(DataType) == false);
             }
 
             return isNull;
         }
 
-        public virtual Dictionary<String, Object> Bind(Dapper.SqlBuilder builder)
+        public virtual Dictionary<string, object> Bind(Dapper.SqlBuilder builder)
         {
-            var parameters = new Dictionary<String, Object>();
+            var parameters = new Dictionary<string, object>();
 
             // Are we creating an "IS NULL" query?
-            if (this.IsNullComparison())
+            if (IsNullComparison())
             {
-                this.Comparison = Comparison.Null;
+                Comparison = Comparison.Null;
             }
             // We are doing a parameterized query
             // So construct the parameter
@@ -141,18 +141,18 @@ namespace Formula.SimpleRepo
             {
                 try
                 {
-                    var convertedValue = Convert.ChangeType(this.Value, this.DataType);
-                    parameters.Add(this.DatabaseColumnName, convertedValue);
+                    var convertedValue = Convert.ChangeType(Value, DataType);
+                    parameters.Add(DatabaseColumnName, convertedValue);
                 }
                 catch (FormatException ex)
                 {
-                    var value = (this.Value == null ? "NULL" : this.Value.ToString());
-                    var msg = $"{this.DatabaseColumnName} failed to convert '{value}' into an {this.DataType.ToString()} - {ex.Message}"; 
+                    var value = (Value == null ? "NULL" : Value.ToString());
+                    var msg = $"{DatabaseColumnName} failed to convert '{value}' into an {DataType.ToString()} - {ex.Message}";
                     throw new FormatException(msg);
                 }
             }
 
-            this.SetWhereClause(builder);
+            SetWhereClause(builder);
 
             return parameters;
         }
@@ -163,13 +163,16 @@ namespace Formula.SimpleRepo
         /// <param name="builder">The SQL Builder instance to use</param>
         private void SetWhereClause(Dapper.SqlBuilder builder)
         {
-            if (this.Comparison == Comparison.Equals) {
-                builder.Where($"{this.DatabaseColumnName} = @{this.DatabaseColumnName}");
+            if (Comparison == Comparison.Equals)
+            {
+                builder.Where($"{DatabaseColumnName} = @{DatabaseColumnName}");
             }
-            else if (this.Comparison == Comparison.Null) {
-                builder.Where($"{this.DatabaseColumnName} IS NULL");
+            else if (Comparison == Comparison.Null)
+            {
+                builder.Where($"{DatabaseColumnName} IS NULL");
             }
-            else {
+            else
+            {
                 throw new NotImplementedException("This constraint comparison type is not implemented yet");
             }
         }

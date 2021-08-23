@@ -1,7 +1,7 @@
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
 namespace Formula.SimpleRepo
@@ -10,7 +10,7 @@ namespace Formula.SimpleRepo
     {
         public static IEnumerable<Type> GetRepositoryList(Assembly assembly)
         {
-            var repos = 
+            var repos =
             from type in assembly.GetTypes()
             where type.IsDefined(typeof(Repo), false)
             select type;
@@ -31,15 +31,14 @@ namespace Formula.SimpleRepo
             {
                 assembly = repositoryAssemblyType.GetTypeInfo().Assembly;
             }
-            
+
             return RepositoryConfiguration.AddRepositories(services, assembly);
         }
 
         public static IServiceCollection AddRepositories(this IServiceCollection services, Assembly assembly)
         {
-            foreach(var type in RepositoryConfiguration.GetRepositoryList(assembly))
+            foreach (var type in RepositoryConfiguration.GetRepositoryList(assembly))
             {
-                // services.AddScoped(type);
                 services.AddTransient(type);
             }
 
