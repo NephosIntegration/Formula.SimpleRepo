@@ -1,16 +1,15 @@
-using System;
 using System.Collections.Generic;
 
 namespace Formula.SimpleRepo
 {
     public class Bindable
     {
-        public String Sql { get; set; }
-        public Dictionary<String, Object> Parameters { get; set; }
+        public string Sql { get; set; }
+        public Dictionary<string, object> Parameters { get; set; }
 
         public Bindable()
         {
-            this.Parameters = new Dictionary<String, Object>();
+            Parameters = new Dictionary<string, object>();
         }
     }
 }

@@ -1,31 +1,29 @@
-using System;
-using System.Data;
-using System.Collections.Generic;
-using System.Collections;
+using Dapper;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Dapper;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Formula.SimpleRepo
 {
-    public abstract class BuilderBase<TConstraintsModel> 
-        : ConstrainableBase<TConstraintsModel>, IBuilder 
+    public abstract class BuilderBase<TConstraintsModel>
+        : ConstrainableBase<TConstraintsModel>, IBuilder
         where TConstraintsModel : new()
     {
         protected SqlBuilder _builder = new SqlBuilder();
 
-        protected Dictionary<String, Object> _parameters { get; set; } = new Dictionary<String, Object>();
+        protected Dictionary<string, object> _parameters { get; set; } = new Dictionary<string, object>();
 
-        protected Boolean _applyScopedConstraints = true; // By default, if we have any scoped constraints they will be applied
+        protected bool _applyScopedConstraints = true; // By default, if we have any scoped constraints they will be applied
         public ConstrainableBase<TConstraintsModel> ApplyScopedConstraints()
         {
-            this._applyScopedConstraints = true;
+            _applyScopedConstraints = true;
             return this;
         }
         public ConstrainableBase<TConstraintsModel> RemoveScopedConstraints()
         {
-            this._applyScopedConstraints = false;
+            _applyScopedConstraints = false;
             return this;
         }
 
@@ -38,7 +36,7 @@ namespace Formula.SimpleRepo
         {
             var output = original;
 
-            if (this._applyScopedConstraints)
+            if (_applyScopedConstraints)
             {
                 if (original == null || original.Count() <= 0)
                 {
@@ -46,7 +44,7 @@ namespace Formula.SimpleRepo
                 }
                 else if (additional != null && additional.Count() > 0)
                 {
-                    foreach(var constraint in additional)
+                    foreach (var constraint in additional)
                     {
                         int existingIndex = original.FindIndex(i => i.Column.Equals(constraint.Column));
                         if (existingIndex > -1)
@@ -69,9 +67,9 @@ namespace Formula.SimpleRepo
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
-        public void AddParameter(String name, Object value)
+        public void AddParameter(string name, object value)
         {
-            this._parameters.Add(name, value);
+            _parameters.Add(name, value);
         }
 
         /// <summary>
@@ -82,15 +80,15 @@ namespace Formula.SimpleRepo
         protected Bindable CombineParameters(Bindable bindable)
         {
             // If we have any global parameters to apply
-            if (this._parameters != null && this._parameters.Count() > 0)
+            if (_parameters != null && _parameters.Count() > 0)
             {
                 if (bindable.Parameters == null || bindable.Parameters.Count() == 0)
                 {
-                    bindable.Parameters = this._parameters;
+                    bindable.Parameters = _parameters;
                 }
                 else
                 {
-                    foreach(var entry in this._parameters)
+                    foreach (var entry in _parameters)
                     {
                         // If this key already exists, replace it, else add it
                         if (bindable.Parameters.ContainsKey(entry.Key))
@@ -112,36 +110,36 @@ namespace Formula.SimpleRepo
         {
             var output = new Bindable();
 
-            var scoped = this.ScopedConstraints(finalConstraints);
-            var constraints = this.MergeConstraints(finalConstraints, scoped);
+            var scoped = ScopedConstraints(finalConstraints);
+            var constraints = MergeConstraints(finalConstraints, scoped);
 
             if (constraints != null && constraints.Count() > 0)
             {
-                foreach(var constraint in constraints) 
+                foreach (var constraint in constraints)
                 {
-                    constraint.Bind(this._builder).AsList().ForEach(x => output.Parameters[x.Key] = x.Value);
+                    constraint.Bind(_builder).AsList().ForEach(x => output.Parameters[x.Key] = x.Value);
                 }
 
-                output.Sql = this._builder.AddTemplate("/**where**/").RawSql;
+                output.Sql = _builder.AddTemplate("/**where**/").RawSql;
             }
 
-            return this.CombineParameters(output);
+            return CombineParameters(output);
         }
 
         public Bindable Where(Hashtable constraints)
         {
-            return this.Where(this.GetConstraints(constraints));
+            return Where(GetConstraints(constraints));
         }
 
         public Bindable Where(JObject json)
         {
-            return this.Where(this.GetConstraints(json));
+            return Where(GetConstraints(json));
         }
 
-        public Bindable WhereFromJson(String json)
+        public Bindable WhereFromJson(string json)
         {
             var obj = JsonConvert.DeserializeObject<JObject>(json);
-            return this.Where(obj);
+            return Where(obj);
         }
     }
 }

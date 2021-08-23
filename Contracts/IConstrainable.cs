@@ -1,7 +1,6 @@
-using System;
-using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace Formula.SimpleRepo
 {
@@ -10,6 +9,6 @@ namespace Formula.SimpleRepo
         List<Constraint> GetConstrainables();
         List<Constraint> GetConstraints(Hashtable constraints);
         List<Constraint> GetConstraints(JObject json);
-        List<Constraint> GetConstraintsFromJson(String json);
+        List<Constraint> GetConstraintsFromJson(string json);
     }
 }

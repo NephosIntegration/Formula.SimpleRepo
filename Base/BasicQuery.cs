@@ -1,14 +1,4 @@
-using System;
-using System.Data;
-using System.Linq;
-using System.Collections.Generic;
-using Dapper;
-using System.Threading.Tasks;
-using System.Threading;
 using Microsoft.Extensions.Configuration;
-using System.Data.SqlClient;
-using System.Reflection;
-using System.Collections;
 
 namespace Formula.SimpleRepo
 {

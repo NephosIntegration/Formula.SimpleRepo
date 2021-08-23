@@ -33,7 +33,9 @@ namespace Dapper
             var idProps = GetIdProperties(currenttype).ToList();
 
             if (!idProps.Any())
+            {
                 throw new ArgumentException("Get<T> only supports an entity with a [Key] or Id property");
+            }
 
             var name = GetTableName(currenttype);
             var sb = new StringBuilder();
@@ -45,21 +47,29 @@ namespace Dapper
             for (var i = 0; i < idProps.Count; i++)
             {
                 if (i > 0)
+                {
                     sb.Append(" and ");
+                }
                 sb.AppendFormat("{0} = @{1}", GetColumnName(idProps[i]), idProps[i].Name);
             }
 
             var dynParms = new DynamicParameters();
             if (idProps.Count == 1)
+            {
                 dynParms.Add("@" + idProps.First().Name, id);
+            }
             else
             {
                 foreach (var prop in idProps)
+                {
                     dynParms.Add("@" + prop.Name, id.GetType().GetProperty(prop.Name).GetValue(id, null));
+                }
             }
 
             if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("Get<{0}>: {1} with Id: {2}", currenttype, sb, id));
+            {
+                Trace.WriteLine(string.Format("Get<{0}>: {1} with Id: {2}", currenttype, sb, id));
+            }
 
             var query = await connection.QueryAsync<T>(sb.ToString(), dynParms, transaction, commandTimeout);
             return query.FirstOrDefault();
@@ -97,7 +107,9 @@ namespace Dapper
             }
 
             if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("GetList<{0}>: {1}", currenttype, sb));
+            {
+                Trace.WriteLine(string.Format("GetList<{0}>: {1}", currenttype, sb));
+            }
 
             return connection.QueryAsync<T>(sb.ToString(), whereConditions, transaction, commandTimeout);
         }
@@ -131,7 +143,9 @@ namespace Dapper
             sb.Append(" " + conditions);
 
             if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("GetList<{0}>: {1}", currenttype, sb));
+            {
+                Trace.WriteLine(string.Format("GetList<{0}>: {1}", currenttype, sb));
+            }
 
             return connection.QueryAsync<T>(sb.ToString(), parameters, transaction, commandTimeout);
         }
@@ -170,12 +184,16 @@ namespace Dapper
         public static Task<IEnumerable<T>> GetListPagedAsync<T>(this IDbConnection connection, int pageNumber, int rowsPerPage, string conditions, string orderby, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             if (string.IsNullOrEmpty(_getPagedListSql))
+            {
                 throw new Exception("GetListPage is not supported with the current SQL Dialect");
+            }
 
             var currenttype = typeof(T);
             var idProps = GetIdProperties(currenttype).ToList();
             if (!idProps.Any())
+            {
                 throw new ArgumentException("Entity must have at least one [Key] property");
+            }
 
             var name = GetTableName(currenttype);
             var sb = new StringBuilder();
@@ -196,7 +214,9 @@ namespace Dapper
             query = query.Replace("{Offset}", ((pageNumber - 1) * rowsPerPage).ToString());
 
             if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("GetListPaged<{0}>: {1}", currenttype, query));
+            {
+                Trace.WriteLine(string.Format("GetListPaged<{0}>: {1}", currenttype, query));
+            }
 
             return connection.QueryAsync<T>(query, parameters, transaction, commandTimeout);
         }
@@ -239,7 +259,9 @@ namespace Dapper
             var idProps = GetIdProperties(entityToInsert).ToList();
 
             if (!idProps.Any())
+            {
                 throw new ArgumentException("Insert<T> only supports an entity with a [Key] or Id property");
+            }
 
             var keyHasPredefinedValue = false;
             var baseType = typeof(TKey);
@@ -285,7 +307,9 @@ namespace Dapper
             }
 
             if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("Insert: {0}", sb));
+            {
+                Trace.WriteLine(string.Format("Insert: {0}", sb));
+            }
 
             if (keytype == typeof(Guid) || keyHasPredefinedValue)
             {
@@ -295,7 +319,7 @@ namespace Dapper
             var r = await connection.QueryAsync(sb.ToString(), entityToInsert, transaction, commandTimeout);
             return (TKey)r.First().id;
         }
-        
+
         /// <summary>
         ///  <para>Updates a record or records in the database asynchronously</para>
         ///  <para>By default updates records in the table matching the class name</para>
@@ -315,7 +339,9 @@ namespace Dapper
             var idProps = GetIdProperties(entityToUpdate).ToList();
 
             if (!idProps.Any())
+            {
                 throw new ArgumentException("Entity must have at least one [Key] or Id property");
+            }
 
             var name = GetTableName(entityToUpdate);
 
@@ -328,7 +354,9 @@ namespace Dapper
             BuildWhere<TEntity>(sb, idProps, entityToUpdate);
 
             if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("Update: {0}", sb));
+            {
+                Trace.WriteLine(string.Format("Update: {0}", sb));
+            }
 
             System.Threading.CancellationToken cancelToken = token ?? default(System.Threading.CancellationToken);
             return connection.ExecuteAsync(new CommandDefinition(sb.ToString(), entityToUpdate, transaction, commandTimeout, cancellationToken: cancelToken));
@@ -352,7 +380,9 @@ namespace Dapper
             var idProps = GetIdProperties(entityToDelete).ToList();
 
             if (!idProps.Any())
+            {
                 throw new ArgumentException("Entity must have at least one [Key] or Id property");
+            }
 
             var name = GetTableName(entityToDelete);
 
@@ -363,7 +393,9 @@ namespace Dapper
             BuildWhere<T>(sb, idProps, entityToDelete);
 
             if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("Delete: {0}", sb));
+            {
+                Trace.WriteLine(string.Format("Delete: {0}", sb));
+            }
 
             return connection.ExecuteAsync(sb.ToString(), entityToDelete, transaction, commandTimeout);
         }
@@ -386,9 +418,11 @@ namespace Dapper
         {
             var currenttype = typeof(T);
             var idProps = GetIdProperties(currenttype).ToList();
-            
+
             if (!idProps.Any())
+            {
                 throw new ArgumentException("Delete<T> only supports an entity with a [Key] or Id property");
+            }
 
             var name = GetTableName(currenttype);
 
@@ -398,21 +432,29 @@ namespace Dapper
             for (var i = 0; i < idProps.Count; i++)
             {
                 if (i > 0)
+                {
                     sb.Append(" and ");
+                }
                 sb.AppendFormat("{0} = @{1}", GetColumnName(idProps[i]), idProps[i].Name);
             }
 
             var dynParms = new DynamicParameters();
             if (idProps.Count == 1)
+            {
                 dynParms.Add("@" + idProps.First().Name, id);
+            }
             else
             {
                 foreach (var prop in idProps)
+                {
                     dynParms.Add("@" + prop.Name, prop.GetValue(id));
+                }
             }
 
             if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("Delete<{0}> {1}", currenttype, sb));
+            {
+                Trace.WriteLine(string.Format("Delete<{0}> {1}", currenttype, sb));
+            }
 
             return connection.ExecuteAsync(sb.ToString(), dynParms, transaction, commandTimeout);
         }
@@ -449,7 +491,9 @@ namespace Dapper
             }
 
             if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("DeleteList<{0}> {1}", currenttype, sb));
+            {
+                Trace.WriteLine(string.Format("DeleteList<{0}> {1}", currenttype, sb));
+            }
 
             return connection.ExecuteAsync(sb.ToString(), whereConditions, transaction, commandTimeout);
         }
@@ -472,9 +516,13 @@ namespace Dapper
         public static Task<int> DeleteListAsync<T>(this IDbConnection connection, string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             if (string.IsNullOrEmpty(conditions))
+            {
                 throw new ArgumentException("DeleteList<T> requires a where clause");
+            }
             if (!conditions.ToLower().Contains("where"))
+            {
                 throw new ArgumentException("DeleteList<T> requires a where clause and must contain the WHERE keyword");
+            }
 
             var currenttype = typeof(T);
             var name = GetTableName(currenttype);
@@ -484,7 +532,9 @@ namespace Dapper
             sb.Append(" " + conditions);
 
             if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("DeleteList<{0}> {1}", currenttype, sb));
+            {
+                Trace.WriteLine(string.Format("DeleteList<{0}> {1}", currenttype, sb));
+            }
 
             return connection.ExecuteAsync(sb.ToString(), parameters, transaction, commandTimeout);
         }
@@ -513,7 +563,9 @@ namespace Dapper
             sb.Append(" " + conditions);
 
             if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("RecordCount<{0}>: {1}", currenttype, sb));
+            {
+                Trace.WriteLine(string.Format("RecordCount<{0}>: {1}", currenttype, sb));
+            }
 
             return connection.ExecuteScalarAsync<int>(sb.ToString(), parameters, transaction, commandTimeout);
         }
@@ -547,7 +599,9 @@ namespace Dapper
             }
 
             if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("RecordCount<{0}>: {1}", currenttype, sb));
+            {
+                Trace.WriteLine(string.Format("RecordCount<{0}>: {1}", currenttype, sb));
+            }
 
             return connection.ExecuteScalarAsync<int>(sb.ToString(), whereConditions, transaction, commandTimeout);
         }

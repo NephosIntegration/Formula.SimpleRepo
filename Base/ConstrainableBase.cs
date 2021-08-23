@@ -1,32 +1,32 @@
-using System;
-using System.Collections.Generic;
-using System.Collections;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
 namespace Formula.SimpleRepo
 {
-    public abstract class ConstrainableBase<TConstraintsModel> 
-        : IConstrainable 
+    public abstract class ConstrainableBase<TConstraintsModel>
+        : IConstrainable
         where TConstraintsModel : new()
     {
-        public String GetDatabaseColumnName(PropertyInfo prop)
+        public string GetDatabaseColumnName(PropertyInfo prop)
         {
             var details = prop.GetCustomAttributes(typeof(Dapper.ColumnAttribute), true).FirstOrDefault() as Dapper.ColumnAttribute;
 
-            return (details == null || String.IsNullOrEmpty(details.Name)) ? prop.Name : details.Name;
+            return (details == null || string.IsNullOrEmpty(details.Name)) ? prop.Name : details.Name;
         }
 
         public List<Constraint> GetConstrainables()
         {
             var output = new List<Constraint>();
 
-            foreach(var prop in typeof(TConstraintsModel).GetProperties()) 
+            foreach (var prop in typeof(TConstraintsModel).GetProperties())
             {
-                Boolean nullable = false;
-                TypeCode typeCode = System.TypeCode.Empty;
+                var nullable = false;
+                var typeCode = System.TypeCode.Empty;
 
                 if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
                 {
@@ -38,22 +38,22 @@ namespace Formula.SimpleRepo
                     typeCode = System.Type.GetTypeCode(prop.PropertyType);
                 }
 
-                output.Add(new Constraint(prop.Name, this.GetDatabaseColumnName(prop), typeCode, nullable));
+                output.Add(new Constraint(prop.Name, GetDatabaseColumnName(prop), typeCode, nullable));
             }
 
-            return output;         
+            return output;
         }
 
         public List<Constraint> GetConstraints(Hashtable constraints)
         {
             var output = new List<Constraint>();
-            var constrainables = this.GetConstrainables();
+            var constrainables = GetConstrainables();
 
             if (constraints.Count > 0)
             {
                 var instance = new TConstraintsModel();
 
-                foreach(var key in constraints.Keys)
+                foreach (var key in constraints.Keys)
                 {
                     var validConstraint = constrainables.GetByColumn(key.ToString());
                     if (validConstraint != null)
@@ -64,19 +64,19 @@ namespace Formula.SimpleRepo
                             var customObjType = typeof(TConstraintsModel).GetProperty(validConstraint.Column).PropertyType;
                             var constraintType = typeof(Constraint);
                             var isConstraint = (customObjType.IsSubclassOf(constraintType) || customObjType == constraintType);
-                            if (isConstraint) 
+                            if (isConstraint)
                             {
                                 constraint = (Constraint)Activator.CreateInstance(customObjType);
                                 constraint.DataType = TypeCode.Object;
                                 constraint.Value = constraints[key].ToString();
                                 constraint.Comparison = validConstraint.Comparison;
-                                
+
                                 // If column isn't specified, use the key as the column name
-                                if (String.IsNullOrWhiteSpace(constraint.Column))
+                                if (string.IsNullOrWhiteSpace(constraint.Column))
                                 {
                                     constraint.Column = validConstraint.Column;
                                 }
-                            }                            
+                            }
                         }
 
                         if (constraint == null)
@@ -96,18 +96,18 @@ namespace Formula.SimpleRepo
         {
             var hash = new Hashtable();
 
-            foreach (var item in json) 
+            foreach (var item in json)
             {
                 hash.Add(item.Key, item.Value.ToString());
             }
 
-            return this.GetConstraints(hash);
+            return GetConstraints(hash);
         }
 
-        public List<Constraint> GetConstraintsFromJson(String json)
+        public List<Constraint> GetConstraintsFromJson(string json)
         {
             var obj = JsonConvert.DeserializeObject<JObject>(json);
-            return this.GetConstraints(obj);
+            return GetConstraints(obj);
         }
     }
 }

@@ -1,9 +1,8 @@
 using System;
-using System.Linq;
 
 namespace Formula.SimpleRepo
 {
-    [AttributeUsage (AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Class)]
     public class Repo : System.Attribute
     {
     }
