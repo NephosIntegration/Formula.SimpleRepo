@@ -18,7 +18,7 @@ namespace Formula.SimpleRepo
             return repos;
         }
 
-        public static IServiceCollection AddRepositories(this IServiceCollection services, Type repositoryAssemblyType = null)
+        public static IServiceCollection AddRepositoryByType(this IServiceCollection services, Type repositoryAssemblyType = null)
         {
             Assembly assembly = null;
 
@@ -32,12 +32,12 @@ namespace Formula.SimpleRepo
                 assembly = repositoryAssemblyType.GetTypeInfo().Assembly;
             }
 
-            return RepositoryConfiguration.AddRepositories(services, assembly);
+            return AddRepositoriesInAssembly(services, assembly);
         }
 
-        public static IServiceCollection AddRepositories(this IServiceCollection services, Assembly assembly)
+        public static IServiceCollection AddRepositoriesInAssembly(this IServiceCollection services, Assembly assembly)
         {
-            foreach (var type in RepositoryConfiguration.GetRepositoryList(assembly))
+            foreach (var type in GetRepositoryList(assembly))
             {
                 services.AddTransient(type);
             }
