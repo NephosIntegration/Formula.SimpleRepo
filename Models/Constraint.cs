@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Formula.SimpleRepo
 {
@@ -49,6 +50,7 @@ namespace Formula.SimpleRepo
         public TypeCode DataType { get; set; }
         public bool Nullable { get; set; }
         public Comparison Comparison { get; set; }
+        public TransformerDelegate PreBindTransformer { get; set; }
 
 
         public Constraint()
@@ -56,7 +58,7 @@ namespace Formula.SimpleRepo
             Comparison = Comparison.Equals;
         }
 
-        public Constraint(string column, string databaseColumnName, TypeCode dataType, bool nullable = false, object value = null, Comparison comparison = Comparison.Equals)
+        public Constraint(string column, string databaseColumnName, TypeCode dataType, bool nullable = false, object value = null, Comparison comparison = Comparison.Equals, TransformerDelegate preBindTransformer = null)
         {
             Column = column;
             DatabaseColumnName = databaseColumnName;
@@ -64,6 +66,7 @@ namespace Formula.SimpleRepo
             Nullable = nullable;
             Value = value;
             Comparison = comparison;
+            PreBindTransformer = preBindTransformer;
         }
 
         /// <summary>
@@ -143,6 +146,11 @@ namespace Formula.SimpleRepo
                 {
                     var convertedValue = Convert.ChangeType(Value, DataType);
                     parameters.Add(DatabaseColumnName, convertedValue);
+                    if (Debugger.IsAttached)
+                    {
+                        // Write the parameterized values to help with debugging
+                        Trace.WriteLine($"@{DatabaseColumnName}:{DataType.ToString()} = {Value.ToString()}");
+                    }
                 }
                 catch (FormatException ex)
                 {

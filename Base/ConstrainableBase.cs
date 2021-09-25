@@ -19,6 +19,11 @@ namespace Formula.SimpleRepo
             return (details == null || string.IsNullOrEmpty(details.Name)) ? prop.Name : details.Name;
         }
 
+        public PreBindTransformer GetPreBindTransformer(PropertyInfo prop)
+        {
+            return prop.GetCustomAttributes(typeof(PreBindTransformer), true).FirstOrDefault() as PreBindTransformer;
+        }
+
         public List<Constraint> GetConstrainables()
         {
             var output = new List<Constraint>();
@@ -38,7 +43,18 @@ namespace Formula.SimpleRepo
                     typeCode = System.Type.GetTypeCode(prop.PropertyType);
                 }
 
-                output.Add(new Constraint(prop.Name, GetDatabaseColumnName(prop), typeCode, nullable));
+                var prebind = GetPreBindTransformer(prop);
+                output.Add(
+                    new Constraint(
+                        prop.Name,
+                        GetDatabaseColumnName(prop),
+                        prebind == null ? typeCode : prebind.DataType,
+                        nullable,
+                        null,
+                        Comparison.Equals,
+                        prebind?.TransformerDelegate
+                    )
+                );
             }
 
             return output;
@@ -58,7 +74,9 @@ namespace Formula.SimpleRepo
                     var validConstraint = constrainables.GetByColumn(key.ToString());
                     if (validConstraint != null)
                     {
-                        Constraint constraint = null;
+                        var constraint = (Constraint)null;
+                        var constraintValue = validConstraint.PreBindTransformer == null ? constraints[key] : validConstraint.PreBindTransformer(constraints[key]);
+
                         if (validConstraint.DataType == TypeCode.Object)
                         {
                             var customObjType = typeof(TConstraintsModel).GetProperty(validConstraint.Column).PropertyType;
@@ -68,7 +86,7 @@ namespace Formula.SimpleRepo
                             {
                                 constraint = (Constraint)Activator.CreateInstance(customObjType);
                                 constraint.DataType = TypeCode.Object;
-                                constraint.Value = constraints[key].ToString();
+                                constraint.Value = constraintValue.ToString();
                                 constraint.Comparison = validConstraint.Comparison;
 
                                 // If column isn't specified, use the key as the column name
@@ -81,7 +99,7 @@ namespace Formula.SimpleRepo
 
                         if (constraint == null)
                         {
-                            constraint = new Constraint(validConstraint.Column, validConstraint.DatabaseColumnName, validConstraint.DataType, validConstraint.Nullable, constraints[key].ToString(), validConstraint.Comparison);
+                            constraint = new Constraint(validConstraint.Column, validConstraint.DatabaseColumnName, validConstraint.DataType, validConstraint.Nullable, constraintValue.ToString(), validConstraint.Comparison);
                         }
 
                         output.Add(constraint);

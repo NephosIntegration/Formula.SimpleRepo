@@ -16,6 +16,13 @@ namespace Formula.SimpleRepo
             return repos;
         }
 
+        // Need to deprecate first before removing until next minor version bump
+        [Obsolete("Consider using AddRepositoriesInAssembly")]
+        public static IServiceCollection AddRepositories(this IServiceCollection services, Type repositoryAssemblyType = null)
+        {
+            return AddRepositoryByType(services, repositoryAssemblyType);
+        }
+
         public static IServiceCollection AddRepositoryByType(this IServiceCollection services, Type repositoryAssemblyType = null)
         {
             Assembly assembly = null;
