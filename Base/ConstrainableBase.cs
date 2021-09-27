@@ -19,9 +19,9 @@ namespace Formula.SimpleRepo
             return (details == null || string.IsNullOrEmpty(details.Name)) ? prop.Name : details.Name;
         }
 
-        public PreBindTransformer GetPreBindTransformer(PropertyInfo prop)
+        public TransformTo GetTransformTo(PropertyInfo prop)
         {
-            return prop.GetCustomAttributes(typeof(PreBindTransformer), true).FirstOrDefault() as PreBindTransformer;
+            return prop.GetCustomAttributes(typeof(TransformTo), true).FirstOrDefault() as TransformTo;
         }
 
         public List<Constraint> GetConstrainables()
@@ -43,7 +43,7 @@ namespace Formula.SimpleRepo
                     typeCode = System.Type.GetTypeCode(prop.PropertyType);
                 }
 
-                var prebind = GetPreBindTransformer(prop);
+                var prebind = GetTransformTo(prop);
                 output.Add(
                     new Constraint(
                         prop.Name,
@@ -52,7 +52,7 @@ namespace Formula.SimpleRepo
                         nullable,
                         null,
                         Comparison.Equals,
-                        prebind?.TransformerDelegate
+                        prebind?.TransformToDelegate
                     )
                 );
             }
@@ -75,7 +75,7 @@ namespace Formula.SimpleRepo
                     if (validConstraint != null)
                     {
                         var constraint = (Constraint)null;
-                        var constraintValue = validConstraint.PreBindTransformer == null ? constraints[key] : validConstraint.PreBindTransformer(constraints[key]);
+                        var constraintValue = validConstraint.TransformTo == null ? constraints[key] : validConstraint.TransformTo(constraints[key]);
 
                         if (validConstraint.DataType == TypeCode.Object)
                         {
