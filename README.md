@@ -204,7 +204,7 @@ namespace MyApi.Data.Repositories
 
 ## Registering Repositories
 
-Repositories can be registered into the depencey injection system by implementing a couple steps. In the **ConfigureServices** section of **Startup.cs** make sure to make a call to **AddRepositories**. Failing to do so will result in controllers depending on these respositories being unable to resolve service for these repository types.
+Repositories can be registered into the depencey injection system by implementing a couple steps. In the **ConfigureServices** section of **Startup.cs** make sure to make a call to **AddRepositoriesInAssembly**. Failing to do so will result in controllers depending on these respositories being unable to resolve service for these repository types.
 
 _InvalidOperationException: Unable to resolve service for type '...' while attempting to activate '...'._
 
@@ -213,23 +213,23 @@ All repositories in your project, decorated with the [Repo] attribute will be in
 ```c#
 using Formula.SimpleRepo;
 ...
-services.AddRepositories();
+services.AddRepositoriesInAssembly();
 ```
 
 If your repositories exists in a different project / library / assembly, you can either specify the assembly directly;
 
 ```c#
 // var repoAssembly = <some function to determine the assembly>
-services.AddRepositories(repoAssembly);
+services.AddRepositoriesInAssembly(repoAssembly);
 ```
 
 Or you can pass just one example repository, and the rest will be found.
 
 ```c#
-services.AddRepositories(typeof(MyOtherProject.Data.MyRepository));
+services.AddRepositoryByType(typeof(MyOtherProject.Data.MyRepository));
 ```
 
-> **Note** - If using this strategy, you do not need to add each new repository, you only have to decorate them with the [Repo] annotation.
+> **Note** - If using these strategies, you do not need to add each new repository, you only have to decorate them with the [Repo] annotation.
 
 ## Step 3 - Work with data
 
@@ -253,7 +253,7 @@ foreach(var item in await repo.GetAsync())
 
 There are async versions of all methods.
 
-**\*Get / GetAsync**- Fetch data\*
+**\*GetAsync**- Fetch data\*
 
 ```c#
 // Get a single item by it's ID
@@ -464,7 +464,7 @@ constraints.Add("MyValue", ""); // Where MyValue is an int and "" is an empty va
 
 ## Transforming Constraint Data Before Query Executes
 
-It's sometimes useful to allow data to be mutated / transformed from one format which is more useful in business logic, to another data format used by the database, by providing a way to transform the data before it is used in a query. The original use case was needing to accept a date from a user, however the database column didn't support a normal Gregorian date format (represented as a typical c# `DateTime` example `12/31/2021`), but instead used Julian date format (represented as an `int` same example in Julian is `2021365`). Instead of requiring the client to support this unusual date format and prepare constraints as Julian format, the value and even the data type can be changed by overriding the `TransformConstraints` method on the repository.
+It's sometimes useful to allow data to be mutated / transformed from one format which is more useful in business logic, to another data format used by the database, by providing a way to transform the data before it is used in a query. The original use case was needing to accept a normal Gregorian date from a user, however the database column didn't support a normal Gregorian date format (represented as a typical c# `DateTime` example `12/31/2021`), but instead used Julian date format (represented as an `int` same example in Julian is `2021365`). Instead of requiring the client to support this unusual date format and prepare constraints as Julian format, the value and even the data type can be changed by overriding the `TransformConstraints` method on the repository.
 
 ```c#
 [Repo]
