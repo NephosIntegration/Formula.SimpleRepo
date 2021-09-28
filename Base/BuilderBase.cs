@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Formula.SimpleRepo
@@ -130,6 +131,18 @@ namespace Formula.SimpleRepo
                         }
                     }
                 }
+            }
+
+            // Write the parameterized values to help with debugging
+            if (Debugger.IsAttached && bindable?.Parameters != null)
+            {
+                Trace.WriteLine("==================");
+                Trace.WriteLine("*** Parameters:");
+                foreach (var p in bindable.Parameters)
+                {
+                    Trace.WriteLine($"@{p.Key} = {p.Value?.ToString()}");
+                }
+                Trace.WriteLine("==================");
             }
 
             return bindable;

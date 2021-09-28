@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Formula.SimpleRepo
 {
@@ -120,11 +119,6 @@ namespace Formula.SimpleRepo
                 {
                     var convertedValue = Convert.ChangeType(Value, DataType);
                     parameters.Add(DatabaseColumnName, convertedValue);
-                    if (Debugger.IsAttached)
-                    {
-                        // Write the parameterized values to help with debugging
-                        Trace.WriteLine($"@{DatabaseColumnName}:{DataType.ToString()} = {Value.ToString()}");
-                    }
                 }
                 catch (FormatException ex)
                 {
