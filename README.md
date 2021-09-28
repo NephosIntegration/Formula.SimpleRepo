@@ -426,6 +426,18 @@ _myRepositoryInstance.RemoveScopedConstraints().Get(constraints);
 
 This will result in all active records, regardless of the logged in user.
 
+It is also the case that sometimes there are required constraints that you want to always ensure are in use with your repository. For this you can also leverage the `ScopedConstraints` method, to enforce certain constraints presence or throw an error if not provided.
+
+The following example will throw an error if your repository is attempted to be used without a required value (`BusinessCustomerKey`) provided.
+
+```c#
+public override List<Formula.SimpleRepo.Constraint> ScopedConstraints(List<Formula.SimpleRepo.Constraint> currentConstraints)
+{
+    currentConstraints.EnsureConstraintExists("BusinessCustomerKey");
+    return null;
+}
+```
+
 ## No Query Constraints
 
 If you wish to implement business logic constraints that will not impact the query, you can use a combination of scoped query constraints and _NoQueryConstraint_ to still be able to receive input from the endpoint, but not have any bindable parameters you wish executed to against the database.
