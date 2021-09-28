@@ -2,6 +2,39 @@
 
 Easy repositories for .Net built on Dapper.
 
+# What Is A Repository
+
+A repository is a service that provides an abstraction data access and persistance. It gives you a central place to construct how you will query your data, and a consistent set of methods for performing all of the CRUD operations against a particular resource stored in a database.
+
+There are two base abstract classes you can implement that operate on a set of generics you provide.
+
+`RepositoryBase` provides all CRUD (Create Read Update Delete) operations.
+
+`ReadOnlyRepositoryBase` provodes read only operations.
+
+It uses centers around a model as a POCO (Plain Old C# Object) that represents the data / resource to be retrieved and inserted. This is supplied as the first generic you provide to your repository `TModel`.
+
+It accepts the template for querying / constraining the data it returns as values provided against a template known as a constraint model. In simplest form, your `TModel` can also serve as your `TConstraints`, but can either be a limited set of fields (if you don't want to allow your data to be queried by every field available), or by extending the querying capability of your repository with additional properties that you define custom queries for in the form of `Custom Constraints` (see below). Constraints form the "input" to the repository which ultimately will be used to query the database. This is the second generic you provide to your repository `TConstraintsModel`. The `TConstraintsModel` provides a template that can be used to define / map the fields to database columns and data types.
+
+The constraints model is simply a template / map for how to structure the data contained in your database table, view or table function. You will actually supply the values to query in several formats all of which must be matched to fields on your `TConstraintsModel`.
+
+- A `System.Collections.Hashtable` - Most common
+- A JSON String representation
+
+These are ultimately converted into a list of `Constraint` objects, which is used to form parameterized queries in the form of a `Bindable` object which is given to Dapper to execute as a query.
+
+Queries can also be performed with
+
+- Newtonsoft `JObject`
+- `List<Constraint>`
+- `Bindable`
+
+Create, Update/Insert and delete operations are performed via `TModel`.
+
+See the following diagram for how input (as represened by the `TConstrainsModel` as the template / map) are converted into a list of results in the form of your `TModel`.
+
+![Query Diagram](/Docs/overview_diagram.png)
+
 # Getting Started
 
 Install the nuget package
@@ -208,7 +241,7 @@ Example...
 
 ```c#
 var repo = new TodoRepository(config);
-foreach(var item in repo.Get())
+foreach(var item in await repo.GetAsync())
 {
     Console.WriteLine(item.Details);
 }
@@ -224,16 +257,16 @@ There are async versions of all methods.
 
 ```c#
 // Get a single item by it's ID
-var record = repo.Get(21); // Can be number or GUID
+var record = await repo.GetAsync(21); // Can be number or GUID
 
 // Get all records
-var records = repo.Get();
+var records = await repo.GetAsync();
 
 // Get by specific fields using JSON to define your constraints
-records = repo.Get("{Completed:true}");
+records = await repo.GetAsync("{Completed:true}");
 
 // Get by hash table
-records = repo.Get(new Hashtable() { { "Completed", true } });
+records = await repo.GetAsync(new Hashtable() { { "Completed", true } });
 
 // Additional methods like fetching via JObject, Bindable (advanced concept), etc..
 
@@ -243,9 +276,9 @@ var idFields = repo.GetIdFields();
 
 // You also have access to other operations provided by SimpleCRUD via the Basic property
 // These do not apply non database / dynamic constrainable concepts described below
-records = repo.Basic.GetList("where column_name like '%asdf%'");
+records = awai repo.Basic.GetListAsync("where column_name like '%asdf%'");
 
-var pagedData = repo.Basic.GetListPaged(1, 10, "where column_a = 'asdf'");
+var pagedData = await repo.Basic.GetListPagedAsync(1, 10, "where column_a = 'asdf'");
 
 var recordCount = repo.Basic.RecordCount("where column_name like '%asdf%'");
 
@@ -261,7 +294,7 @@ Like above, there are async versions of all methods.
 
 ```c#
 // Delete
-repo.Delete(21); // Can be number or GUID
+repo.DeleteAsync(21); // Can be number or GUID
 
 // Insert
 var modelToSave = new Todo() {
@@ -269,7 +302,7 @@ var modelToSave = new Todo() {
     Completed = false,
 };
 
-var newId = repo.Insert(modelToSave);
+var newId = await repo.InsertAsync(modelToSave);
 
 // Update
 var modelToSave = new Todo() {
@@ -278,12 +311,12 @@ var modelToSave = new Todo() {
     Completed = true,
 };
 
-repo.Update(modelToSave);
+repo.UpdateAsync(modelToSave);
 
 // Like with the basic query operations, you also still have access to other basic
 // operations that don't apply to the constrainable types.
 
-repo.Basic.DeleteList("where yadda yadda...");
+repo.Basic.DeleteListAsync("where yadda yadda...");
 
 ```
 
@@ -302,11 +335,11 @@ Consider that you have a date column, you might want to be able to fetch records
 For things like this, adding custom constraints are the solution.
 
 ```c#
-var records = repo.Get(new Hashtable() { { "FutureRecords", true } });
+var records = await repo.GetAsync(new Hashtable() { { "FutureRecords", true } });
 ...
-var records = repo.Get(new Hashtable() { { "NearMe", true } });
+var records = await repo.GetAsync(new Hashtable() { { "NearMe", true } });
 ...
-var records = repo.Get(new Hashtable() { { "AtStockPoint", myVariable } });
+var records = await repo.GetAsync(new Hashtable() { { "AtStockPoint", myVariable } });
 ```
 
 Example..
@@ -357,13 +390,20 @@ The input for this fucntion is all the currently applied constraints that are be
 The expected output of this function is a list of contraints you want to apply (or override). You can be explicit on the behavior and introduce totally new constraints that have even been created on your model, or you can create a hashtable to match contraints on your model and call the **GetConstraints** function to have them generated using the design of the model based constraints (or custom constrains you have previously designed).
 
 ```c#
-public override List<Formula.SimpleRepo.Constraint> ScopedConstraints(List<Formula.SimpleRepo.Constraint> currentConstraints)
+[Repo]
+public class MyRepo : ReadOnlyRepositoryBase<MyOutputModel, MyConstraintsModel>
 {
-    var constraints = new Hashtable();
-    constraints.Add("UserName", this._userId);
-    return this.GetConstraints(constraints);
-}
+    public BusinessTransferRepository(IConfiguration config) : base(config)
+    {
+    }
 
+    public override List<Formula.SimpleRepo.Constraint> ScopedConstraints(List<Formula.SimpleRepo.Constraint> currentConstraints)
+    {
+        var constraints = new Hashtable();
+        constraints.Add("UserName", this._userId);
+        return this.GetConstraints(constraints);
+    }
+}
 ```
 
 Example use;
@@ -424,33 +464,37 @@ constraints.Add("MyValue", ""); // Where MyValue is an int and "" is an empty va
 
 ## Transforming Constraint Data Before Query Executes
 
-It's sometimes useful to allow data to be mutated / transformed from one format which is more useful in business logic, to another data format used by the database, by providing a way to transform the data before it is used in a query. The original use case was needing to accept a date from a user, however the database column didn't support a normal Gregorian date format (represented as a typical c# `DateTime` example `12/31/2021`), but instead used Julian date format (represented as an `int` same example in Julian is `2021365`). Instead of requiring the client to support this unusual date format and prepare constraints as Julian format, the concept of **Transformers** made it easier to allow developers to abstract away this concept of the database via a transformer.
-
-To transform a value used in a constraint, to another type used within the database, you may decorate the field of your constraint with the `TransformTo` attribute, this allows you to supply a delegate that will be called to perform the custom conversation before it executes the query.
-
-The function to be used for the conversion must be usable with the following `TransformTo` delegate definition.
+It's sometimes useful to allow data to be mutated / transformed from one format which is more useful in business logic, to another data format used by the database, by providing a way to transform the data before it is used in a query. The original use case was needing to accept a date from a user, however the database column didn't support a normal Gregorian date format (represented as a typical c# `DateTime` example `12/31/2021`), but instead used Julian date format (represented as an `int` same example in Julian is `2021365`). Instead of requiring the client to support this unusual date format and prepare constraints as Julian format, the value and even the data type can be changed by overriding the `TransformConstraints` method on the repository.
 
 ```c#
-public delegate object TransformToDelegate(object value);
-```
-
-First, create a static class and method to perform your conversion, that has your function implementation.
-
-```c#
-public static class MyTransformers
+[Repo]
+public class MyRepo : ReadOnlyRepositoryBase<MyOutputModel, MyConstraintsModel>
 {
-    public static object ToJulianDate(object val)
+    public BusinessTransferRepository(IConfiguration config) : base(config)
     {
-        return DateTime.Parse(val.ToString()).ToJulianDate();
+    }
+
+    public override List<Formula.SimpleRepo.Constraint> TransformConstraints(List<Formula.SimpleRepo.Constraint> currentConstraints)
+    {
+        // Start Date is actually stored in the database as an int in Julian format
+        currentConstraints.TransformConstraint("StartDate", (constraint) =>
+        {
+            constraint.DataType = System.TypeCode.Int32;
+            constraint.Value = constraint.Value?.ToString().ToJulianDate();
+            return constraint;
+        });
+
+        // End Date is actually stored in the database as an int in Julian format
+        currentConstraints.TransformConstraint("EndDate", (constraint) =>
+        {
+            constraint.DataType = System.TypeCode.Int32;
+            constraint.Value = constraint.Value?.ToString().ToJulianDate();
+            return constraint;
+        });
+
+        return currentConstraints;
     }
 }
-```
-
-Then simply decorate the field on your constraint with the `TransformTo` attribute, passing it the name of your class containing your method `typeof(MyTransformers)`, the name of your specific method `nameof(MyTransformers.ToJulianDate)` and the data type that would result from the conversion `System.TypeCode.Int32`).
-
-```c#
-[TransformTo(typeof(MyTransformers), nameof(MyTransformers.ToJulianDate), System.TypeCode.Int32)]
-public DateTime? StartDate { get; set; }
 ```
 
 ## (Optional) Step 6 - Expose via API

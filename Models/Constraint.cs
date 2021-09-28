@@ -10,38 +10,9 @@ namespace Formula.SimpleRepo
         Null = 1,
     }
 
-    public static class ConstraintExtensions
-    {
-        public static Constraint GetByColumn(this List<Constraint> constraints, string column)
-        {
-            Constraint output = null;
-
-            foreach (var item in constraints)
-            {
-                if (item.Column.Equals(column, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    output = item;
-                    break;
-                }
-            }
-
-            return output;
-        }
-    }
-
-    public class NoQueryConstraint : Constraint
-    {
-        // Logic scope only, no impact on the database
-        public override Dictionary<string, object> Bind(Dapper.SqlBuilder builder)
-        {
-            var parameters = new Dictionary<string, object>();
-
-            parameters.Add("", null);
-
-            return parameters;
-        }
-    }
-
+    /// <summary>
+    /// A constraint is the basic building block of mapping out all of the properties we can query for data by.
+    /// </summary>
     public class Constraint
     {
         public string Column { get; set; }
@@ -50,15 +21,13 @@ namespace Formula.SimpleRepo
         public TypeCode DataType { get; set; }
         public bool Nullable { get; set; }
         public Comparison Comparison { get; set; }
-        public TransformToDelegate TransformTo { get; set; }
-
 
         public Constraint()
         {
             Comparison = Comparison.Equals;
         }
 
-        public Constraint(string column, string databaseColumnName, TypeCode dataType, bool nullable = false, object value = null, Comparison comparison = Comparison.Equals, TransformToDelegate transformTo = null)
+        public Constraint(string column, string databaseColumnName, TypeCode dataType, bool nullable = false, object value = null, Comparison comparison = Comparison.Equals)
         {
             Column = column;
             DatabaseColumnName = databaseColumnName;
@@ -66,7 +35,6 @@ namespace Formula.SimpleRepo
             Nullable = nullable;
             Value = value;
             Comparison = comparison;
-            TransformTo = transformTo;
         }
 
         /// <summary>
@@ -129,6 +97,12 @@ namespace Formula.SimpleRepo
             return isNull;
         }
 
+        /// <summary>
+        /// Default binding behavior for a constraint, this can be overridden in a "custom constraint"
+        /// to produce a more complicated parameterized SQL query
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <returns></returns>
         public virtual Dictionary<string, object> Bind(Dapper.SqlBuilder builder)
         {
             var parameters = new Dictionary<string, object>();

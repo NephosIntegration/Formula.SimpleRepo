@@ -25,16 +25,6 @@ namespace Formula.SimpleRepo
             return SimpleCRUD.DeleteAsync<TModel>(_connection, entityToDelete, transaction, commandTimeout);
         }
 
-        public virtual int DeleteList(string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
-        {
-            return SimpleCRUD.DeleteList<TModel>(_connection, conditions, parameters, transaction, commandTimeout);
-        }
-
-        public virtual int DeleteList(object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
-        {
-            return SimpleCRUD.DeleteList<TModel>(_connection, whereConditions, transaction, commandTimeout);
-        }
-
         public virtual Task<int> DeleteListAsync(string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             return SimpleCRUD.DeleteListAsync<TModel>(_connection, conditions, parameters, transaction, commandTimeout);
@@ -43,16 +33,6 @@ namespace Formula.SimpleRepo
         public virtual Task<int> DeleteListAsync(object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             return SimpleCRUD.DeleteListAsync<TModel>(_connection, whereConditions, transaction, commandTimeout);
-        }
-
-        public virtual int? Insert(TModel entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
-        {
-            return SimpleCRUD.Insert<TModel>(_connection, entityToInsert, transaction, commandTimeout);
-        }
-
-        public virtual TKey Insert<TKey>(TModel entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
-        {
-            return SimpleCRUD.Insert<TKey, TModel>(_connection, entityToInsert, transaction, commandTimeout);
         }
 
         public virtual Task<TKey> InsertAsync<TKey>(TModel entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
