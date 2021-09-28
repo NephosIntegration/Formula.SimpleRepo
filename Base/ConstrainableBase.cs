@@ -78,7 +78,7 @@ namespace Formula.SimpleRepo
                             {
                                 constraint = (Constraint)Activator.CreateInstance(customObjType);
                                 constraint.DataType = TypeCode.Object;
-                                constraint.Value = constraints[key];
+                                constraint.Value = constraints[key].ToString();
                                 constraint.Comparison = validConstraint.Comparison;
 
                                 // If column isn't specified, use the key as the column name
@@ -91,7 +91,7 @@ namespace Formula.SimpleRepo
 
                         if (constraint == null)
                         {
-                            constraint = new Constraint(validConstraint.Column, validConstraint.DatabaseColumnName, validConstraint.DataType, validConstraint.Nullable, constraints[key], validConstraint.Comparison);
+                            constraint = new Constraint(validConstraint.Column, validConstraint.DatabaseColumnName, validConstraint.DataType, validConstraint.Nullable, constraints[key].ToString(), validConstraint.Comparison);
                         }
 
                         output.Add(constraint);
