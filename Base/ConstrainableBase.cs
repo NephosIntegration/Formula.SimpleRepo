@@ -38,7 +38,16 @@ namespace Formula.SimpleRepo
                     typeCode = System.Type.GetTypeCode(prop.PropertyType);
                 }
 
-                output.Add(new Constraint(prop.Name, GetDatabaseColumnName(prop), typeCode, nullable));
+                output.Add(
+                    new Constraint(
+                        prop.Name,
+                        GetDatabaseColumnName(prop),
+                        typeCode,
+                        nullable,
+                        null,   // We don't know the value yet so initialize with nothing
+                        Comparison.Equals
+                    )
+                );
             }
 
             return output;
@@ -58,7 +67,8 @@ namespace Formula.SimpleRepo
                     var validConstraint = constrainables.GetByColumn(key.ToString());
                     if (validConstraint != null)
                     {
-                        Constraint constraint = null;
+                        var constraint = (Constraint)null;
+
                         if (validConstraint.DataType == TypeCode.Object)
                         {
                             var customObjType = typeof(TConstraintsModel).GetProperty(validConstraint.Column).PropertyType;

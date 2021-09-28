@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Formula.SimpleRepo
@@ -16,20 +17,49 @@ namespace Formula.SimpleRepo
         protected Dictionary<string, object> _parameters { get; set; } = new Dictionary<string, object>();
 
         protected bool _applyScopedConstraints = true; // By default, if we have any scoped constraints they will be applied
+
         public ConstrainableBase<TConstraintsModel> ApplyScopedConstraints()
         {
             _applyScopedConstraints = true;
             return this;
         }
+
         public ConstrainableBase<TConstraintsModel> RemoveScopedConstraints()
         {
             _applyScopedConstraints = false;
             return this;
         }
 
+        /// <summary>
+        /// You might also only want certain records to be returned based on some certain "scope". 
+        /// Scoped constraints, are contraints that get applied automatically with every request. 
+        /// These are applied in addition to (and instead of) any contraints applied that might be present. 
+        /// These are useful for applying default constraints that need to be applied every time, and also as 
+        /// a strategy for limiting the scope of the data returned for security reasons, or other creative 
+        /// business rule purposes. 
+        /// You can also programatically turn these on and off with .RemoveScopedConstraints()
+        /// </summary>
+        /// <param name="currentConstraints"></param>
+        /// <returns></returns>
         public virtual List<Constraint> ScopedConstraints(List<Constraint> currentConstraints)
         {
+            // Default behavior is no automatically applied constraints, this method must be overridden
             return null;
+        }
+
+        /// <summary>
+        /// Give an opportunity for data transformations and constraint behaviors to be modified
+        /// before the query is constructed..
+        /// This is useful if you are allowing your constraint model to represent and accept user input
+        /// in one fashion, but it needs to be transformed in some way before it is handed over as the value
+        /// to be used by your custom constrains, or by the default binding behavior of Dapper.
+        /// </summary>
+        /// <param name="currentConstraints">The currently mapped out constraints</param>
+        /// <returns></returns>
+        public virtual List<Constraint> TransformConstraints(List<Constraint> currentConstraints)
+        {
+            // Default behavior is no transformations need to occur
+            return currentConstraints;
         }
 
         public virtual List<Constraint> MergeConstraints(List<Constraint> original, List<Constraint> additional)
@@ -103,15 +133,34 @@ namespace Formula.SimpleRepo
                 }
             }
 
+            // Write the parameterized values to help with debugging
+            if (Debugger.IsAttached && bindable?.Parameters != null)
+            {
+                Trace.WriteLine("==================");
+                Trace.WriteLine("*** Parameters:");
+                foreach (var p in bindable.Parameters)
+                {
+                    Trace.WriteLine($"@{p.Key} = {p.Value?.ToString()}");
+                }
+                Trace.WriteLine("==================");
+            }
+
             return bindable;
         }
 
-        public Bindable Where(List<Constraint> finalConstraints)
+        public Bindable Where(List<Constraint> currentConstraints)
         {
             var output = new Bindable();
 
-            var scoped = ScopedConstraints(finalConstraints);
-            var constraints = MergeConstraints(finalConstraints, scoped);
+            // Scoped constraints are applied via middleware within the repositories
+            // Typically used to supply global default constraints
+            var scoped = ScopedConstraints(currentConstraints);
+
+            // Combine our list as we might have picked up some more constraints via ScopedConstraints
+            var combined = MergeConstraints(currentConstraints, scoped);
+
+            // Give a last chance for the outside world (aka repository) to modify the behavior of the constraints
+            var constraints = TransformConstraints(combined);
 
             if (constraints != null && constraints.Count() > 0)
             {
