@@ -25,29 +25,32 @@ namespace Formula.SimpleRepo
 
             foreach (var prop in typeof(TConstraintsModel).GetProperties())
             {
-                var nullable = false;
-                var typeCode = System.TypeCode.Empty;
-
-                if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                if (prop.IsConstrainable())
                 {
-                    nullable = true;
-                    typeCode = System.Type.GetTypeCode(prop.PropertyType.GetGenericArguments()[0]);
-                }
-                else
-                {
-                    typeCode = System.Type.GetTypeCode(prop.PropertyType);
-                }
+                    var nullable = false;
+                    var typeCode = System.TypeCode.Empty;
 
-                output.Add(
-                    new Constraint(
-                        prop.Name,
-                        GetDatabaseColumnName(prop),
-                        typeCode,
-                        nullable,
-                        null,   // We don't know the value yet so initialize with nothing
-                        Comparison.Equals
-                    )
-                );
+                    if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    {
+                        nullable = true;
+                        typeCode = System.Type.GetTypeCode(prop.PropertyType.GetGenericArguments()[0]);
+                    }
+                    else
+                    {
+                        typeCode = System.Type.GetTypeCode(prop.PropertyType);
+                    }
+
+                    output.Add(
+                        new Constraint(
+                            prop.Name,
+                            GetDatabaseColumnName(prop),
+                            typeCode,
+                            nullable,
+                            null,   // We don't know the value yet so initialize with nothing
+                            Comparison.Equals
+                        )
+                    );
+                }
             }
 
             return output;
