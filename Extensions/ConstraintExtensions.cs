@@ -63,5 +63,22 @@ namespace Formula.SimpleRepo
 
             return output;
         }
+
+        /// <summary>
+        /// Used to determine whether or not a property is valid for use as a constrainable.
+        /// Properties can be be skipped if decorated with certian attributes.
+        /// </summary>
+        /// <param name="propertyInfo">The property to examine</param>
+        /// <returns>true / false representing if it was found to be a constrainable property</returns>
+        public static bool IsConstrainable(this PropertyInfo propertyInfo)
+        {
+            // If it has NotMapped it's not constrainable
+            var isConstrainable = !Attribute.IsDefined(propertyInfo, typeof(Dapper.NotMappedAttribute));
+
+            // If it's not eliminated yet (using short circuit evaluation), check the next attribute (IgnoreSelect)
+            isConstrainable = (isConstrainable && !Attribute.IsDefined(propertyInfo, typeof(Dapper.IgnoreSelectAttribute)));
+
+            return isConstrainable;
+        }
     }
 }
