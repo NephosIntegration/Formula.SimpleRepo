@@ -12,9 +12,9 @@ namespace Formula.SimpleRepo
         where TConstraintsModel : new()
     {
         protected readonly IConfiguration _config;
-        protected string _connectionName;
-        protected IDbConnection _connection;
-        protected SimpleCRUD.Dialect _dialect;
+        protected readonly string _connectionName;
+        protected readonly IDbConnection _connection;
+        protected readonly SimpleCRUD.Dialect _dialect;
 
         protected SimpleCRUD _simpleCRUD = null;
 
