@@ -14,12 +14,28 @@ namespace Formula.SimpleRepo
         protected readonly IConfiguration _config;
         protected string _connectionName;
         protected IDbConnection _connection;
+        protected SimpleCRUD.Dialect _dialect;
+
+        protected SimpleCRUD _simpleCRUD = null;
+
+        public SimpleCRUD BasicSimpleCRUD
+        {
+            get
+            {
+                if (_simpleCRUD == null)
+                {
+                    _simpleCRUD = new SimpleCRUD(_dialect);
+                }
+                return _simpleCRUD;
+            }
+        }
 
         public BasicQueryBase(IConfiguration config)
         {
             _config = config;
             _connectionName = ConnectionDetails.GetConnectionName<TModel>();
             _connection = ConnectionDetails.GetConnection<TModel>(GetConnectionString());
+            _dialect = ConnectionDetails.GetDialect<TModel>();
         }
 
         protected virtual string GetConnectionString()
@@ -29,7 +45,7 @@ namespace Formula.SimpleRepo
 
         public virtual Task<TModel> GetAsync(object id, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            return SimpleCRUD.GetAsync<TModel>(_connection, id, transaction, commandTimeout);
+            return BasicSimpleCRUD.GetAsync<TModel>(_connection, id, transaction, commandTimeout);
         }
 
         public virtual Task<IEnumerable<TModel>> GetListAsync()
@@ -39,28 +55,28 @@ namespace Formula.SimpleRepo
 
         public virtual Task<IEnumerable<TModel>> GetListAsync(string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            return SimpleCRUD.GetListAsync<TModel>(_connection, conditions, parameters, transaction, commandTimeout);
+            return BasicSimpleCRUD.GetListAsync<TModel>(_connection, conditions, parameters, transaction, commandTimeout);
         }
 
         public virtual Task<IEnumerable<TModel>> GetListAsync(object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            return SimpleCRUD.GetListAsync<TModel>(_connection, whereConditions, transaction, commandTimeout);
+            return BasicSimpleCRUD.GetListAsync<TModel>(_connection, whereConditions, transaction, commandTimeout);
         }
 
         public virtual Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, string conditions, string orderby, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            return SimpleCRUD.GetListPagedAsync<TModel>(_connection, pageNumber, rowsPerPage, conditions, orderby, parameters, transaction, commandTimeout);
+            return BasicSimpleCRUD.GetListPagedAsync<TModel>(_connection, pageNumber, rowsPerPage, conditions, orderby, parameters, transaction, commandTimeout);
         }
 
 
         public virtual Task<int> RecordCountAsync(string conditions = "", object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            return SimpleCRUD.RecordCountAsync<TModel>(_connection, conditions, parameters, transaction, commandTimeout);
+            return BasicSimpleCRUD.RecordCountAsync<TModel>(_connection, conditions, parameters, transaction, commandTimeout);
         }
 
         public Task<int> RecordCountAsync(object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            return SimpleCRUD.RecordCountAsync<TModel>(_connection, whereConditions, transaction, commandTimeout);
+            return BasicSimpleCRUD.RecordCountAsync<TModel>(_connection, whereConditions, transaction, commandTimeout);
         }
     }
 }

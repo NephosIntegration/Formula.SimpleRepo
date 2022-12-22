@@ -37,8 +37,14 @@ namespace Formula.SimpleRepo
             var details = typeof(T).GetCustomAttributes(typeof(ConnectionDetails), true).FirstOrDefault() as ConnectionDetails;
             var connection = (IDbConnection)Activator.CreateInstance(details.ConnectionType);
             connection.ConnectionString = connectionString;
-            Dapper.SimpleCRUD.SetDialect(details.Dialect);
+
             return connection;
+        }
+
+        public static SimpleCRUD.Dialect GetDialect<T>()
+        {
+            var details = typeof(T).GetCustomAttributes(typeof(ConnectionDetails), true).FirstOrDefault() as ConnectionDetails;
+            return details.Dialect;
         }
     }
 }
