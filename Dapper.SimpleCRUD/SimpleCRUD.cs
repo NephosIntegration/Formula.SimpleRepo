@@ -13,28 +13,24 @@ namespace Dapper
     /// <summary>
     /// Main class for Dapper.SimpleCRUD extensions
     /// </summary>
-    public static partial class SimpleCRUD
+    public partial class SimpleCRUD
     {
-
-        static SimpleCRUD()
+        public SimpleCRUD(Dialect selectedDialect)
         {
-            SetDialect(_dialect);
+            SetDialect(selectedDialect);
         }
 
-        private static Dialect _dialect = Dialect.SQLServer;
-        private static string _encapsulation;
-        private static string _getIdentitySql;
-        private static string _getPagedListSql;
-        private static string _tableFunctionSql;
+        private Dialect _dialect = Dialect.SQLServer;
+        private string _encapsulation;
+        private string _getIdentitySql;
+        private string _getPagedListSql;
+        private string _tableFunctionSql;
 
-        private static readonly ConcurrentDictionary<Type, string> TableNames = new ConcurrentDictionary<Type, string>();
-        private static readonly ConcurrentDictionary<string, string> ColumnNames = new ConcurrentDictionary<string, string>();
+        private readonly ConcurrentDictionary<Type, string> TableNames = new();
+        private readonly ConcurrentDictionary<string, string> ColumnNames = new();
 
-        private static readonly ConcurrentDictionary<string, string> StringBuilderCacheDict = new ConcurrentDictionary<string, string>();
-        private static bool StringBuilderCacheEnabled = true;
-
-        private static ITableNameResolver _tableNameResolver = new TableNameResolver();
-        private static IColumnNameResolver _columnNameResolver = new ColumnNameResolver();
+        private readonly ConcurrentDictionary<string, string> StringBuilderCacheDict = new();
+        private bool StringBuilderCacheEnabled = true;
 
         /// <summary>
         /// Append a Cached version of a strinbBuilderAction result based on a cacheKey
@@ -42,7 +38,7 @@ namespace Dapper
         /// <param name="sb"></param>
         /// <param name="cacheKey"></param>
         /// <param name="stringBuilderAction"></param>
-        private static void StringBuilderCache(StringBuilder sb, string cacheKey, Action<StringBuilder> stringBuilderAction)
+        private void StringBuilderCache(StringBuilder sb, string cacheKey, Action<StringBuilder> stringBuilderAction)
         {
             if (StringBuilderCacheEnabled && StringBuilderCacheDict.TryGetValue(cacheKey, out string value))
             {
@@ -61,7 +57,7 @@ namespace Dapper
         /// Returns the current dialect name
         /// </summary>
         /// <returns></returns>
-        public static string GetDialect()
+        public string GetDialect()
         {
             return _dialect.ToString();
         }
@@ -70,7 +66,7 @@ namespace Dapper
         /// Sets the database dialect 
         /// </summary>
         /// <param name="dialect"></param>
-        public static void SetDialect(Dialect dialect)
+        public void SetDialect(Dialect dialect)
         {
             switch (dialect)
             {
@@ -113,24 +109,6 @@ namespace Dapper
         }
 
         /// <summary>
-        /// Sets the table name resolver
-        /// </summary>
-        /// <param name="resolver">The resolver to use when requesting the format of a table name</param>
-        public static void SetTableNameResolver(ITableNameResolver resolver)
-        {
-            _tableNameResolver = resolver;
-        }
-
-        /// <summary>
-        /// Sets the column name resolver
-        /// </summary>
-        /// <param name="resolver">The resolver to use when requesting the format of a column name</param>
-        public static void SetColumnNameResolver(IColumnNameResolver resolver)
-        {
-            _columnNameResolver = resolver;
-        }
-
-        /// <summary>
         /// <para>By default queries the table matching the class name</para>
         /// <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
         /// <para>By default filters on the Id column</para>
@@ -144,7 +122,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>Returns a single entity by a single id from table T.</returns>
-        public static T Get<T>(this IDbConnection connection, object id, IDbTransaction transaction = null, int? commandTimeout = null)
+        public T Get<T>(IDbConnection connection, object id, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var currenttype = typeof(T);
             var idProps = GetIdProperties(currenttype).ToList();
@@ -204,7 +182,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>Gets a list of entities with optional exact match where conditions</returns>
-        public static IEnumerable<T> GetList<T>(this IDbConnection connection, object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
+        public IEnumerable<T> GetList<T>(IDbConnection connection, object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var currenttype = typeof(T);
             var name = GetTableName(currenttype);
@@ -245,7 +223,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>Gets a list of entities with optional SQL where conditions</returns>
-        public static IEnumerable<T> GetList<T>(this IDbConnection connection, string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public IEnumerable<T> GetList<T>(IDbConnection connection, string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var currenttype = typeof(T);
             var name = GetTableName(currenttype);
@@ -274,9 +252,9 @@ namespace Dapper
         /// <typeparam name="T"></typeparam>
         /// <param name="connection"></param>
         /// <returns>Gets a list of all entities</returns>
-        public static IEnumerable<T> GetList<T>(this IDbConnection connection)
+        public IEnumerable<T> GetList<T>(IDbConnection connection)
         {
-            return connection.GetList<T>(new { });
+            return GetList<T>(connection, new { });
         }
 
         /// <summary>
@@ -298,7 +276,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>Gets a paged list of entities with optional exact match where conditions</returns>
-        public static IEnumerable<T> GetListPaged<T>(this IDbConnection connection, int pageNumber, int rowsPerPage, string conditions, string orderby, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public IEnumerable<T> GetListPaged<T>(IDbConnection connection, int pageNumber, int rowsPerPage, string conditions, string orderby, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             if (string.IsNullOrEmpty(_getPagedListSql))
             {
@@ -357,7 +335,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The ID (primary key) of the newly inserted record if it is identity using the int? type, otherwise null</returns>
-        public static int? Insert<TEntity>(this IDbConnection connection, TEntity entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
+        public int? Insert<TEntity>(IDbConnection connection, TEntity entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             return Insert<int?, TEntity>(connection, entityToInsert, transaction, commandTimeout);
         }
@@ -376,7 +354,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The ID (primary key) of the newly inserted record if it is identity using the defined type, otherwise null</returns>
-        public static TKey Insert<TKey, TEntity>(this IDbConnection connection, TEntity entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
+        public TKey Insert<TKey, TEntity>(IDbConnection connection, TEntity entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var idProps = GetIdProperties(entityToInsert).ToList();
 
@@ -457,7 +435,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of affected records</returns>
-        public static int Update<TEntity>(this IDbConnection connection, TEntity entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null)
+        public int Update<TEntity>(IDbConnection connection, TEntity entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var masterSb = new StringBuilder();
             StringBuilderCache(masterSb, $"{typeof(TEntity).FullName}_Update", sb =>
@@ -499,7 +477,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of records affected</returns>
-        public static int Delete<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null)
+        public int Delete<T>(IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var masterSb = new StringBuilder();
             StringBuilderCache(masterSb, $"{typeof(T).FullName}_Delete", sb =>
@@ -541,7 +519,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of records affected</returns>
-        public static int Delete<T>(this IDbConnection connection, object id, IDbTransaction transaction = null, int? commandTimeout = null)
+        public int Delete<T>(IDbConnection connection, object id, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var currenttype = typeof(T);
             var idProps = GetIdProperties(currenttype).ToList();
@@ -602,7 +580,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of records affected</returns>
-        public static int DeleteList<T>(this IDbConnection connection, object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
+        public int DeleteList<T>(IDbConnection connection, object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var masterSb = new StringBuilder();
             StringBuilderCache(masterSb, $"{typeof(T).FullName}_DeleteWhere{whereConditions?.GetType()?.FullName}", sb =>
@@ -642,7 +620,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of records affected</returns>
-        public static int DeleteList<T>(this IDbConnection connection, string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public int DeleteList<T>(IDbConnection connection, string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var masterSb = new StringBuilder();
             StringBuilderCache(masterSb, $"{typeof(T).FullName}_DeleteWhere{conditions}", sb =>
@@ -681,7 +659,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>Returns a count of records.</returns>
-        public static int RecordCount<T>(this IDbConnection connection, string conditions = "", object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public int RecordCount<T>(IDbConnection connection, string conditions = "", object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var currenttype = typeof(T);
             var name = GetTableName(currenttype);
@@ -711,7 +689,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>Returns a count of records.</returns>
-        public static int RecordCount<T>(this IDbConnection connection, object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
+        public int RecordCount<T>(IDbConnection connection, object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var currenttype = typeof(T);
             var name = GetTableName(currenttype);
@@ -735,7 +713,7 @@ namespace Dapper
         }
 
         //build update statement based on list on an entity
-        private static void BuildUpdateSet<T>(T entityToUpdate, StringBuilder masterSb)
+        private void BuildUpdateSet<T>(T entityToUpdate, StringBuilder masterSb)
         {
             StringBuilderCache(masterSb, $"{typeof(T).FullName}_BuildUpdateSet", sb =>
             {
@@ -755,13 +733,13 @@ namespace Dapper
         }
 
         //build select clause based on list of properties skipping ones with the IgnoreSelect and NotMapped attribute
-        private static void BuildSelect(StringBuilder masterSb, IEnumerable<PropertyInfo> props)
+        private void BuildSelect(StringBuilder masterSb, IEnumerable<PropertyInfo> props)
         {
             StringBuilderCache(masterSb, $"{props.CacheKey()}_BuildSelect", sb =>
             {
                 var propertyInfos = props as IList<PropertyInfo> ?? props.ToList();
                 var addedAny = false;
-                for (var i = 0; i < propertyInfos.Count(); i++)
+                for (var i = 0; i < propertyInfos.Count; i++)
                 {
                     var property = propertyInfos.ElementAt(i);
 
@@ -782,7 +760,7 @@ namespace Dapper
             });
         }
 
-        private static void BuildWhere<TEntity>(StringBuilder sb, IEnumerable<PropertyInfo> idProps, object whereConditions = null)
+        private void BuildWhere<TEntity>(StringBuilder sb, IEnumerable<PropertyInfo> idProps, object whereConditions = null)
         {
             var propertyInfos = idProps.ToArray();
             for (var i = 0; i < propertyInfos.Count(); i++)
@@ -824,7 +802,7 @@ namespace Dapper
         //Not marked with the [Key] attribute (without required attribute)
         //Not marked with [IgnoreInsert]
         //Not marked with [NotMapped]
-        private static void BuildInsertValues<T>(StringBuilder masterSb)
+        private void BuildInsertValues<T>(StringBuilder masterSb)
         {
             StringBuilderCache(masterSb, $"{typeof(T).FullName}_BuildInsertValues", sb =>
             {
@@ -869,7 +847,7 @@ namespace Dapper
         //marked with [IgnoreInsert]
         //named Id
         //marked with [NotMapped]
-        private static void BuildInsertParameters<T>(StringBuilder masterSb)
+        private void BuildInsertParameters<T>(StringBuilder masterSb)
         {
             StringBuilderCache(masterSb, $"{typeof(T).FullName}_BuildInsertParameters", sb =>
             {
@@ -921,7 +899,7 @@ namespace Dapper
         }
 
         //Get all properties that are not decorated with the Editable(false) attribute
-        private static IEnumerable<PropertyInfo> GetScaffoldableProperties<T>()
+        private IEnumerable<PropertyInfo> GetScaffoldableProperties<T>()
         {
             IEnumerable<PropertyInfo> props = typeof(T).GetProperties();
 
@@ -948,7 +926,6 @@ namespace Dapper
             return false;
         }
 
-
         //Determine if the Attribute has an IsReadOnly key and return its boolean state
         //fake the funk and try to mimic ReadOnlyAttribute in System.ComponentModel 
         //This allows use of the DataAnnotations property in the model and have the SimpleCRUD engine just figure it out without a reference
@@ -972,7 +949,7 @@ namespace Dapper
         //Not marked ReadOnly
         //Not marked IgnoreInsert
         //Not marked NotMapped
-        private static IEnumerable<PropertyInfo> GetUpdateableProperties<T>(T entity)
+        private IEnumerable<PropertyInfo> GetUpdateableProperties<T>(T entity)
         {
             var updateableProperties = GetScaffoldableProperties<T>();
             //remove ones with ID
@@ -991,7 +968,7 @@ namespace Dapper
 
         //Get all properties that are named Id or have the Key attribute
         //For Inserts and updates we have a whole entity so this method is used
-        private static IEnumerable<PropertyInfo> GetIdProperties(object entity)
+        private IEnumerable<PropertyInfo> GetIdProperties(object entity)
         {
             var type = entity.GetType();
             return GetIdProperties(type);
@@ -999,7 +976,7 @@ namespace Dapper
 
         //Get all properties that are named Id or have the Key attribute
         //For Get(id) and Delete(id) we don't have an entity, just the type so this method is used
-        private static IEnumerable<PropertyInfo> GetIdProperties(Type type)
+        private IEnumerable<PropertyInfo> GetIdProperties(Type type)
         {
             var tp = type.GetProperties().Where(p => p.GetCustomAttributes(true).Any(attr => attr.GetType().Name == typeof(KeyAttribute).Name)).ToList();
             return tp.Any() ? tp : type.GetProperties().Where(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase));
@@ -1008,7 +985,7 @@ namespace Dapper
         //Gets the table name for this entity
         //For Inserts and updates we have a whole entity so this method is used
         //Uses class name by default and overrides if the class has a Table attribute
-        private static string GetTableName(object entity)
+        private string GetTableName(object entity)
         {
             var type = entity.GetType();
             return GetTableName(type);
@@ -1018,39 +995,39 @@ namespace Dapper
         //For Get(id) and Delete(id) we don't have an entity, just the type so this method is used
         //Use dynamic type to be able to handle both our Table-attribute and the DataAnnotation
         //Uses class name by default and overrides if the class has a Table attribute
-        private static string GetTableName(Type type)
+        private string GetTableName(Type type)
         {
-            string tableName;
-
-            if (TableNames.TryGetValue(type, out tableName))
+            if (TableNames.TryGetValue(type, out string tableName))
             {
                 return tableName;
             }
 
-            tableName = _tableNameResolver.ResolveTableName(type);
+            //tableName = _tableNameResolver.ResolveTableName(type);
+            tableName = ResolveTableName(type);
 
             TableNames.AddOrUpdate(type, tableName, (t, v) => tableName);
 
             return tableName;
         }
 
-        private static string GetColumnName(PropertyInfo propertyInfo)
+        private string GetColumnName(PropertyInfo propertyInfo)
         {
-            string columnName, key = string.Format("{0}.{1}", propertyInfo.DeclaringType, propertyInfo.Name);
+            string key = string.Format("{0}.{1}", propertyInfo.DeclaringType, propertyInfo.Name);
 
-            if (ColumnNames.TryGetValue(key, out columnName))
+            if (ColumnNames.TryGetValue(key, out string columnName))
             {
                 return columnName;
             }
 
-            columnName = _columnNameResolver.ResolveColumnName(propertyInfo);
+            //columnName = _columnNameResolver.ResolveColumnName(propertyInfo);
+            columnName = ResolveColumnName(propertyInfo);
 
             ColumnNames.AddOrUpdate(key, columnName, (t, v) => columnName);
 
             return columnName;
         }
 
-        private static string Encapsulate(string databaseword)
+        private string Encapsulate(string databaseword)
         {
             return string.Format(_encapsulation, databaseword);
         }
@@ -1086,72 +1063,56 @@ namespace Dapper
             DB2
         }
 
-        public interface ITableNameResolver
+        public string ResolveTableName(Type type)
         {
-            string ResolveTableName(Type type);
-        }
+            var tableName = Encapsulate(type.Name);
 
-        public interface IColumnNameResolver
-        {
-            string ResolveColumnName(PropertyInfo propertyInfo);
-        }
-
-        public class TableNameResolver : ITableNameResolver
-        {
-            public virtual string ResolveTableName(Type type)
+            var tableattr = type.GetCustomAttributes(true).SingleOrDefault(attr => attr.GetType().Name == typeof(TableAttribute).Name) as dynamic;
+            if (tableattr != null)
             {
-                var tableName = Encapsulate(type.Name);
-
-                var tableattr = type.GetCustomAttributes(true).SingleOrDefault(attr => attr.GetType().Name == typeof(TableAttribute).Name) as dynamic;
-                if (tableattr != null)
+                tableName = Encapsulate(tableattr.Name);
+                try
                 {
-                    tableName = Encapsulate(tableattr.Name);
-                    try
+                    if (!string.IsNullOrEmpty(tableattr.Schema))
                     {
-                        if (!string.IsNullOrEmpty(tableattr.Schema))
-                        {
-                            var schemaName = Encapsulate(tableattr.Schema);
-                            tableName = string.Format("{0}.{1}", schemaName, tableName);
-                        }
-
-                        if (tableattr.Parameters != null && tableattr.Parameters.Length > 0)
-                        {
-                            tableName = _tableFunctionSql.Replace("{TableName}", tableName);
-                            var parameterized = new List<string>();
-                            foreach (var parameter in tableattr.Parameters)
-                            {
-                                parameterized.Add($"@{parameter}");
-                            }
-                            tableName = tableName.Replace("{TableParams}", string.Join(",", parameterized));
-                        }
+                        var schemaName = Encapsulate(tableattr.Schema);
+                        tableName = string.Format("{0}.{1}", schemaName, tableName);
                     }
-                    catch (RuntimeBinderException)
+
+                    if (tableattr.Parameters != null && tableattr.Parameters.Length > 0)
                     {
-                        //Schema doesn't exist on this attribute.
+                        tableName = _tableFunctionSql.Replace("{TableName}", tableName);
+                        var parameterized = new List<string>();
+                        foreach (var parameter in tableattr.Parameters)
+                        {
+                            parameterized.Add($"@{parameter}");
+                        }
+                        tableName = tableName.Replace("{TableParams}", string.Join(",", parameterized));
                     }
                 }
-
-                return tableName;
+                catch (RuntimeBinderException)
+                {
+                    //Schema doesn't exist on this attribute.
+                }
             }
+
+            return tableName;
         }
 
-        public class ColumnNameResolver : IColumnNameResolver
+        public string ResolveColumnName(PropertyInfo propertyInfo)
         {
-            public virtual string ResolveColumnName(PropertyInfo propertyInfo)
-            {
-                var columnName = Encapsulate(propertyInfo.Name);
+            var columnName = Encapsulate(propertyInfo.Name);
 
-                var columnattr = propertyInfo.GetCustomAttributes(true).SingleOrDefault(attr => attr.GetType().Name == typeof(ColumnAttribute).Name) as dynamic;
-                if (columnattr != null)
+            var columnattr = propertyInfo.GetCustomAttributes(true).SingleOrDefault(attr => attr.GetType().Name == typeof(ColumnAttribute).Name) as dynamic;
+            if (columnattr != null)
+            {
+                columnName = Encapsulate(columnattr.Name);
+                if (Debugger.IsAttached)
                 {
-                    columnName = Encapsulate(columnattr.Name);
-                    if (Debugger.IsAttached)
-                    {
-                        Trace.WriteLine(string.Format("Column name for type overridden from {0} to {1}", propertyInfo.Name, columnName));
-                    }
+                    Trace.WriteLine(string.Format("Column name for type overridden from {0} to {1}", propertyInfo.Name, columnName));
                 }
-                return columnName;
             }
+            return columnName;
         }
     }
 

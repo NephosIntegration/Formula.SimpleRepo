@@ -15,6 +15,7 @@ namespace Formula.SimpleRepo
         }
 
         protected BasicCRUDBase<TModel, TConstraintsModel> _basicCRUD = null;
+
         public new IBasicCRUD<TModel> Basic
         {
             get
@@ -26,7 +27,6 @@ namespace Formula.SimpleRepo
                 return _basicCRUD;
             }
         }
-
 
         public virtual Task<int?> InsertAsync(TModel entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
         {

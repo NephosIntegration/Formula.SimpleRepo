@@ -17,14 +17,16 @@ namespace Formula.SimpleRepo
         where TConstraintsModel : new()
     {
         protected readonly IConfiguration _config;
-        protected string _connectionName;
-        protected IDbConnection _connection;
+        protected readonly string _connectionName;
+        protected readonly IDbConnection _connection;
+        protected readonly SimpleCRUD.Dialect _dialect;
 
         public ReadOnlyRepositoryBase(IConfiguration config)
         {
             _config = config;
             _connectionName = ConnectionDetails.GetConnectionName<TModel>();
             _connection = ConnectionDetails.GetConnection<TModel>(GetConnectionString());
+            _dialect = ConnectionDetails.GetDialect<TModel>();
         }
 
         protected BasicQueryBase<TModel, TConstraintsModel> _basicQuery = null;
