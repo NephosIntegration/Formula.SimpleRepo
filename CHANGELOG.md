@@ -17,3 +17,8 @@
 ## 1.1.2
 
 - Added ability to skip contraints that have specific attributes tied to them `[NotMapped]` and `[IgnoreSelect]`
+
+## 2.6.0
+
+- ADS-7146 - Refactored SimpleCrud from static to needing to be instantiated / injected to solve encapsulation problems under load (everything needed to be scoped instead of global)
+
