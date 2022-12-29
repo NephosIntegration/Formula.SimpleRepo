@@ -133,17 +133,7 @@ public abstract class BuilderBase<TConstraintsModel>
             }
         }
 
-        // Write the parameterized values to help with debugging
-        if (Debugger.IsAttached && bindable?.Parameters != null)
-        {
-            Trace.WriteLine("==================");
-            Trace.WriteLine("*** Parameters:");
-            foreach (var p in bindable.Parameters)
-            {
-                Trace.WriteLine($"@{p.Key} = {p.Value?.ToString()}");
-            }
-            Trace.WriteLine("==================");
-        }
+        QueryLogger.Log(bindable?.Parameters);
 
         return bindable;
     }

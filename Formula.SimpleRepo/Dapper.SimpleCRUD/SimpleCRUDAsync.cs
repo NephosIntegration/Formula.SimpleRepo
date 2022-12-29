@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Formula.SimpleRepo;
 
 namespace Dapper;
 
@@ -260,6 +261,8 @@ public partial class SimpleCRUD
             throw new Exception("Invalid return type");
         }
 
+        QueryLogger.Log(entityToInsert);
+
         var name = GetTableName(entityToInsert);
         var sb = new StringBuilder();
         sb.AppendFormat("insert into {0}", name);
@@ -328,6 +331,8 @@ public partial class SimpleCRUD
             throw new ArgumentException("Entity must have at least one [Key] or Id property");
         }
 
+        QueryLogger.Log(entityToUpdate);
+
         var name = GetTableName(entityToUpdate);
 
         var sb = new StringBuilder();
@@ -366,6 +371,8 @@ public partial class SimpleCRUD
             throw new ArgumentException("Entity must have at least one [Key] or Id property");
         }
 
+        QueryLogger.Log(entityToDelete);
+
         var name = GetTableName(entityToDelete);
 
         var sb = new StringBuilder();
@@ -403,6 +410,7 @@ public partial class SimpleCRUD
             throw new ArgumentException("Delete<T> only supports an entity with a [Key] or Id property");
         }
 
+        QueryLogger.Log(id);
         var name = GetTableName(currenttype);
 
         var sb = new StringBuilder();

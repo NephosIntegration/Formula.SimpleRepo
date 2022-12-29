@@ -45,6 +45,10 @@ public class RepositoryBaseTests
         Assert.Equal(todo2.Completed, todo3.Completed);
         Assert.Equal(todo2.CategoryId, todo3.CategoryId);
 
+        // Confirm only 2 records
+        var recordCount = await repo.Basic.RecordCountAsync();
+        Assert.Equal(2, recordCount);
+
         // Test Delete
         rows = await repo.DeleteAsync(todo3.Id);
         Assert.True(rows > 0);
@@ -52,5 +56,9 @@ public class RepositoryBaseTests
         // Confirm Delete
         var todo4 = await repo.GetAsync(todo3.Id);
         Assert.Null(todo4);
+
+        // Confirm only 1 record
+        recordCount = await repo.Basic.RecordCountAsync();
+        Assert.Equal(1, recordCount);
     }
 }
