@@ -10,7 +10,7 @@ There are two base abstract classes you can implement that operate on a set of g
 
 `RepositoryBase` provides all CRUD (Create Read Update Delete) operations.
 
-`ReadOnlyRepositoryBase` provodes read only operations.
+`ReadOnlyRepositoryBase` provides read only operations.
 
 It uses centers around a model as a POCO (Plain Old C# Object) that represents the data / resource to be retrieved and inserted. This is supplied as the first generic you provide to your repository `TModel`.
 
@@ -31,7 +31,7 @@ Queries can also be performed with
 
 Create, Update/Insert and delete operations are performed via `TModel`.
 
-See the following diagram for how input (as represened by the `TConstrainsModel` as the template / map) are converted into a list of results in the form of your `TModel`.
+See the following diagram for how input (as represented by the `TConstrainsModel` as the template / map) are converted into a list of results in the form of your `TModel`.
 
 ![Query Diagram](/Docs/overview_diagram.png)
 
@@ -204,7 +204,7 @@ namespace MyApi.Data.Repositories
 
 ## Registering Repositories
 
-Repositories can be registered into the depencey injection system by implementing a couple steps. In the **ConfigureServices** section of **Startup.cs** make sure to make a call to **AddRepositoriesInAssembly**. Failing to do so will result in controllers depending on these respositories being unable to resolve service for these repository types.
+Repositories can be registered into the dependency injection system by implementing a couple steps. In the **ConfigureServices** section of **Startup.cs** make sure to make a call to **AddRepositoriesInAssembly**. Failing to do so will result in controllers depending on these repositories being unable to resolve service for these repository types.
 
 _InvalidOperationException: Unable to resolve service for type '...' while attempting to activate '...'._
 
@@ -347,7 +347,7 @@ Example..
 Suppose we wanted to allow our todo list to be able to be queried by a particular keyword found in the details of the todo.
 
 We can create a class extending the Todo model defining a new constraint called DetailsLike.
-We first must define this new constraint (by extending Contraint), and we must implement the Bind method that handles building the query for values.
+We first must define this new constraint (by extending Constraint), and we must implement the Bind method that handles building the query for values.
 
 ```c#
 public class DetailsLike : Constraint
@@ -364,7 +364,7 @@ public class DetailsLike : Constraint
 }
 ```
 
-Since we want to allow constraint binding against all of the current properties on our model, we can extend our Todo model and add an aditional field called DetailsLike.
+Since we want to allow constraint binding against all of the current properties on our model, we can extend our Todo model and add an additional field called DetailsLike.
 
 ```c#
 public class TodoConstraints : Todo
@@ -381,13 +381,13 @@ public class TodoRepository : RepositoryBase<Todo, TodoConstraints>
 
 ## Scoped Constraints
 
-You might also only want certain records to be returned based on some certain "scope". Scoped constraints, are contraints that get applied automatically with every request. These are applied in addition to (and instead of) any contraints applied that might be present. These are useful for applying default constraints that need to be applied every time, and also as a strategy for limiting the scope of the data returned for security reasons, or other creative business rule purposes. You can also programatically turn these on and off.
+You might also only want certain records to be returned based on some certain "scope". Scoped constraints, are constraints that get applied automatically with every request. These are applied in addition to (and instead of) any constraints applied that might be present. These are useful for applying default constraints that need to be applied every time, and also as a strategy for limiting the scope of the data returned for security reasons, or other creative business rule purposes. You can also programmatically turn these on and off.
 
 For example, if I want to limit the scope of data, so that users can only see their data based on their user id, I can apply a scoped constraint. This way if a request for all data, is made, the server side can limit the results.
 
 On your repository implementation override the **ScopedConstraints** function.  
-The input for this fucntion is all the currently applied constraints that are being applied (which could be useful for various business rule purposes).
-The expected output of this function is a list of contraints you want to apply (or override). You can be explicit on the behavior and introduce totally new constraints that have even been created on your model, or you can create a hashtable to match contraints on your model and call the **GetConstraints** function to have them generated using the design of the model based constraints (or custom constrains you have previously designed).
+The input for this function is all the currently applied constraints that are being applied (which could be useful for various business rule purposes).
+The expected output of this function is a list of constraints you want to apply (or override). You can be explicit on the behavior and introduce totally new constraints that have even been created on your model, or you can create a hashtable to match constraints on your model and call the **GetConstraints** function to have them generated using the design of the model based constraints (or custom constrains you have previously designed).
 
 ```c#
 [Repo]
@@ -467,7 +467,7 @@ To Verbosely set a constraint to null, use the word `NULL` as a string.
 constraints.Add("MyValue", "NULL");
 ```
 
-The implicitly / assumed null is a programatic decision within the library. So this is the least desirable means of producing a null constraint.  
+The implicitly / assumed null is a programmatic decision within the library. So this is the least desirable means of producing a null constraint.  
 If a value is considered to be `empty` for a datatype that doesn't support empty _(such as strings)_, it will be assumed this is to be a null constraint.
 
 ```c#
@@ -512,6 +512,121 @@ public class MyRepo : ReadOnlyRepositoryBase<MyOutputModel, MyConstraintsModel>
 ## (Optional) Step 6 - Expose via API
 
 The [Formula.SimpleAPI](https://github.com/NephosIntegration/Formula.SimpleAPI) project provides utilities to expose your repository as a RESTful API.
+
+
+# Classes
+
+```mermaid
+classDiagram
+    ConstrainableBase <|-- BuilderBase
+    BuilderBase <|-- ReadOnlyRepositoryBase
+    ReadOnlyRepositoryBase <|-- RepositoryBase
+
+    RepositoryBase <|-- YourRepository
+    class YourRepository{
+
+    }
+
+    class RepositoryBase{
+        <<Abstract>>
+        +BasicCRUD Basic
+        InsertAsync()
+        UpdateAsync()
+        DeleteAsync()
+    }
+    RepositoryBase --> BasicCRUD: Basic
+    
+    class ReadOnlyRepositoryBase{
+        <<Abstract>>
+        +BasicQuery Basic
+        GetIdFields()
+        GetAsync()
+    }
+    ReadOnlyRepositoryBase --> BasicQuery: Basic
+
+    class BuilderBase{
+        <<Abstract>>
+        -Dictionary~string,object~ _parameters
+        ApplyScopedConstraints()
+        RemoveScopedConstraints()
+        ScopedConstraints()
+        TransformConstraints()
+        MergeConstraints()
+        AddParameter()
+        CombineParameters()
+        Where()
+        WhereFromJson()
+    }
+
+    TConstraintsModel <|-- ConstrainableBase
+    TConstraintsModel ..> Constraint : "Properties Become"
+    class TConstraintsModel{
+        +string Column1
+        +string Column2
+        +int Column3
+    }
+
+    class ConstrainableBase~TConstraintsModel~{
+        <<Abstract>>
+        GetDatabaseColumnName(): string
+        GetConstrainables(): List~Constraint~
+        GetConstraints(): List~Constraint~
+    }
+    Constraint "1..*" --> "1" ConstrainableBase
+    
+    class Constraint{
+        +string Column
+        +string DatabaseColumnName
+        +object Value
+        +TypeCode DataType
+        +bool Nullable
+        +Comparison Comparison
+    }
+    
+
+    BasicQueryBase <|-- BasicCRUDBase
+
+    class BasicQueryBase{
+        <<Abstract>>
+        +SimpleCRUD BasicSimpleCRUD
+        GetAsync()
+        GetlistAsync()
+        GetListPagedAsync()
+        RecordCountAsync()
+    }
+    BasicQueryBase --> SimpleCRUD: BasicSimpleCRUD
+    SimpleCRUD ..> BasicQueryBase : "Resuls as List of TConstraintsModel"
+
+    class BasicCRUDBase{
+        <<Abstract>>
+        DeleteAsync()
+        DeleteListAsync()
+        InsertAsync()
+        UpdateAsync()
+    }
+
+    BasicCRUDBase <|-- BasicCRUD
+    
+    class BasicCRUD{
+        CreateOperations
+        ReadOperations
+        UpdateOperations
+        DeleteOperations
+    }
+
+    BasicQueryBase <|-- BasicQuery
+
+    class BasicQuery{
+        ReadOperations
+    }
+
+    class SimpleCRUD{
+        Dapper
+        RawSQL
+    }
+
+
+```
 
 ---
 
