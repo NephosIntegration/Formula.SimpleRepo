@@ -36,10 +36,16 @@ public abstract class ReadOnlyRepositoryBase<TModel, TConstraintsModel>
         {
             if (_basicQuery == null)
             {
-                _basicQuery = new BasicQuery<TModel, TConstraintsModel>(_config);
+                
+                _basicQuery = new BasicQuery<TModel, TConstraintsModel>(_config, (query) => LogQuery(query));
             }
             return _basicQuery;
         }
+    }
+
+    public virtual void LogQuery(string query)
+    {
+        QueryLogger.DefaultLogQuery(query);
     }
 
     public List<string> GetIdFields()

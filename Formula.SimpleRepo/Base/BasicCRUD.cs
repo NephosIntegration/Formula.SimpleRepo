@@ -7,7 +7,10 @@ public class BasicCRUD<TModel, TConstraintsModel>
     where TModel : class
     where TConstraintsModel : new()
 {
-    public BasicCRUD(IConfiguration config) : base(config)
+    public BasicCRUD(
+        IConfiguration config, 
+        QueryLogger.LogQueryDelegate logQueryDelegate = null
+    ) : base(config, logQueryDelegate)
     {
     }
 }

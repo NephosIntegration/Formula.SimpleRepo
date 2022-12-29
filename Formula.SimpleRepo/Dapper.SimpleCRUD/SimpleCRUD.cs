@@ -1,9 +1,9 @@
-﻿using Microsoft.CSharp.RuntimeBinder;
+﻿using Formula.SimpleRepo;
+using Microsoft.CSharp.RuntimeBinder;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -15,11 +15,6 @@ namespace Dapper;
 /// </summary>
 public partial class SimpleCRUD
 {
-    public SimpleCRUD(Dialect selectedDialect)
-    {
-        SetDialect(selectedDialect);
-    }
-
     private Dialect _dialect = Dialect.SQLServer;
     private string _encapsulation;
     private string _getIdentitySql;
@@ -31,6 +26,16 @@ public partial class SimpleCRUD
 
     private readonly ConcurrentDictionary<string, string> StringBuilderCacheDict = new();
     private bool StringBuilderCacheEnabled = true;
+    private readonly QueryLogger.LogQueryDelegate _logQuery;
+
+    public SimpleCRUD(
+        Dialect selectedDialect,
+        QueryLogger.LogQueryDelegate logQueryDelegate = null
+    )
+    {
+        _logQuery = logQueryDelegate ?? QueryLogger.DefaultLogQuery;
+        SetDialect(selectedDialect);
+    }
 
     /// <summary>
     /// Append a Cached version of a strinbBuilderAction result based on a cacheKey
@@ -161,10 +166,7 @@ public partial class SimpleCRUD
             }
         }
 
-        if (Debugger.IsAttached)
-        {
-            Trace.WriteLine(string.Format("Get<{0}>: {1} with Id: {2}", currenttype, sb, id));
-        }
+        _logQuery(string.Format("Get<{0}>: {1} with Id: {2}", currenttype, sb, id));
 
         return connection.Query<T>(sb.ToString(), dynParms, transaction, true, commandTimeout).FirstOrDefault();
     }
@@ -200,10 +202,7 @@ public partial class SimpleCRUD
             BuildWhere<T>(sb, whereprops, whereConditions);
         }
 
-        if (Debugger.IsAttached)
-        {
-            Trace.WriteLine(string.Format("GetList<{0}>: {1}", currenttype, sb));
-        }
+        _logQuery(string.Format("GetList<{0}>: {1}", currenttype, sb));
 
         return connection.Query<T>(sb.ToString(), whereConditions, transaction, true, commandTimeout);
     }
@@ -236,10 +235,7 @@ public partial class SimpleCRUD
 
         sb.Append(" " + conditions);
 
-        if (Debugger.IsAttached)
-        {
-            Trace.WriteLine(string.Format("GetList<{0}>: {1}", currenttype, sb));
-        }
+        _logQuery(string.Format("GetList<{0}>: {1}", currenttype, sb));
 
         return connection.Query<T>(sb.ToString(), parameters, transaction, true, commandTimeout);
     }
@@ -313,10 +309,7 @@ public partial class SimpleCRUD
         query = query.Replace("{WhereClause}", conditions);
         query = query.Replace("{Offset}", ((pageNumber - 1) * rowsPerPage).ToString());
 
-        if (Debugger.IsAttached)
-        {
-            Trace.WriteLine(string.Format("GetListPaged<{0}>: {1}", currenttype, query));
-        }
+        _logQuery(string.Format("GetListPaged<{0}>: {1}", currenttype, query));
 
         return connection.Query<T>(query, parameters, transaction, true, commandTimeout);
     }
@@ -407,10 +400,7 @@ public partial class SimpleCRUD
             keyHasPredefinedValue = true;
         }
 
-        if (Debugger.IsAttached)
-        {
-            Trace.WriteLine(string.Format("Insert: {0}", sb));
-        }
+        _logQuery(string.Format("Insert: {0}", sb));
 
         var r = connection.Query(sb.ToString(), entityToInsert, transaction, true, commandTimeout);
 
@@ -456,10 +446,7 @@ public partial class SimpleCRUD
             sb.Append(" where ");
             BuildWhere<TEntity>(sb, idProps, entityToUpdate);
 
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine(string.Format("Update: {0}", sb));
-            }
+            _logQuery(string.Format("Update: {0}", sb));
         });
         return connection.Execute(masterSb.ToString(), entityToUpdate, transaction, commandTimeout);
     }
@@ -497,10 +484,7 @@ public partial class SimpleCRUD
             sb.Append(" where ");
             BuildWhere<T>(sb, idProps, entityToDelete);
 
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine(string.Format("Delete: {0}", sb));
-            }
+            _logQuery(string.Format("Delete: {0}", sb));
         });
         return connection.Execute(masterSb.ToString(), entityToDelete, transaction, commandTimeout);
     }
@@ -557,10 +541,7 @@ public partial class SimpleCRUD
             }
         }
 
-        if (Debugger.IsAttached)
-        {
-            Trace.WriteLine(string.Format("Delete<{0}> {1}", currenttype, sb));
-        }
+        _logQuery(string.Format("Delete<{0}> {1}", currenttype, sb));
 
         return connection.Execute(sb.ToString(), dynParms, transaction, commandTimeout);
     }
@@ -596,10 +577,7 @@ public partial class SimpleCRUD
                 BuildWhere<T>(sb, whereprops);
             }
 
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine(string.Format("DeleteList<{0}> {1}", currenttype, sb));
-            }
+            _logQuery(string.Format("DeleteList<{0}> {1}", currenttype, sb));
         });
         return connection.Execute(masterSb.ToString(), whereConditions, transaction, commandTimeout);
     }
@@ -636,10 +614,7 @@ public partial class SimpleCRUD
             sb.AppendFormat("Delete from {0}", name);
             sb.Append(" " + conditions);
 
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine(string.Format("DeleteList<{0}> {1}", currenttype, sb));
-            }
+            _logQuery(string.Format("DeleteList<{0}> {1}", currenttype, sb));
         });
         return connection.Execute(masterSb.ToString(), parameters, transaction, commandTimeout);
     }
@@ -668,10 +643,7 @@ public partial class SimpleCRUD
         sb.AppendFormat(" from {0}", name);
         sb.Append(" " + conditions);
 
-        if (Debugger.IsAttached)
-        {
-            Trace.WriteLine(string.Format("RecordCount<{0}>: {1}", currenttype, sb));
-        }
+        _logQuery(string.Format("RecordCount<{0}>: {1}", currenttype, sb));
 
         return connection.ExecuteScalar<int>(sb.ToString(), parameters, transaction, commandTimeout);
     }
@@ -704,10 +676,7 @@ public partial class SimpleCRUD
             BuildWhere<T>(sb, whereprops);
         }
 
-        if (Debugger.IsAttached)
-        {
-            Trace.WriteLine(string.Format("RecordCount<{0}>: {1}", currenttype, sb));
-        }
+        _logQuery(string.Format("RecordCount<{0}>: {1}", currenttype, sb));
 
         return connection.ExecuteScalar<int>(sb.ToString(), whereConditions, transaction, commandTimeout);
     }
@@ -1107,10 +1076,7 @@ public partial class SimpleCRUD
         if (columnattr != null)
         {
             columnName = Encapsulate(columnattr.Name);
-            if (Debugger.IsAttached)
-            {
-                Trace.WriteLine(string.Format("Column name for type overridden from {0} to {1}", propertyInfo.Name, columnName));
-            }
+            _logQuery(string.Format("Column name for type overridden from {0} to {1}", propertyInfo.Name, columnName));
         }
         return columnName;
     }

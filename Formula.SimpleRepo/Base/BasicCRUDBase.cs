@@ -10,7 +10,10 @@ public abstract class BasicCRUDBase<TModel, TConstraintsModel>
     where TModel : class
     where TConstraintsModel : new()
 {
-    public BasicCRUDBase(IConfiguration config) : base(config)
+    public BasicCRUDBase(
+        IConfiguration config, 
+        QueryLogger.LogQueryDelegate logQueryDelegate = null
+    ) : base(config, logQueryDelegate)
     {
     }
 

@@ -15,6 +15,7 @@ public abstract class BasicQueryBase<TModel, TConstraintsModel>
     protected readonly string _connectionName;
     protected readonly IDbConnection _connection;
     protected readonly SimpleCRUD.Dialect _dialect;
+    private readonly QueryLogger.LogQueryDelegate _logQuery;
 
     protected SimpleCRUD _simpleCRUD = null;
 
@@ -24,15 +25,19 @@ public abstract class BasicQueryBase<TModel, TConstraintsModel>
         {
             if (_simpleCRUD == null)
             {
-                _simpleCRUD = new SimpleCRUD(_dialect);
+                _simpleCRUD = new SimpleCRUD(_dialect, _logQuery);
             }
             return _simpleCRUD;
         }
     }
 
-    public BasicQueryBase(IConfiguration config)
+    public BasicQueryBase(
+        IConfiguration config, 
+        QueryLogger.LogQueryDelegate logQueryDelegate = null
+    )
     {
         _config = config;
+        _logQuery = logQueryDelegate ?? QueryLogger.DefaultLogQuery;
         _connectionName = ConnectionDetails.GetConnectionName<TModel>();
         _connection = ConnectionDetails.GetConnection<TModel>(GetConnectionString());
         _dialect = ConnectionDetails.GetDialect<TModel>();

@@ -22,7 +22,7 @@ public abstract class RepositoryBase<TModel, TConstraintsModel>
         {
             if (_basicCRUD == null)
             {
-                _basicCRUD = new BasicCRUD<TModel, TConstraintsModel>(_config);
+                _basicCRUD = new BasicCRUD<TModel, TConstraintsModel>(_config, (query) => LogQuery(query));
             }
             return _basicCRUD;
         }

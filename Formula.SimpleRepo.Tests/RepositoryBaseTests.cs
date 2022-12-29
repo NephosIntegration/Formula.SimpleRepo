@@ -15,11 +15,13 @@ public class RepositoryBaseTests
 
         var existingTodo = await repo.GetAsync(1);
         Assert.Equal(1, existingTodo.Id);
+        Assert.Equal("GetList<Formula.SimpleRepo.Tests.TodoModel>: Select \"Id\",\"Details\",\"Completed\",\"CategoryId\" from \"Todos\" WHERE Id = @Id\n", repo.LastQuery);
 
         // Test Insert
         var todo = new TodoModel { Details = "Test 1", Completed = false };
         var id = await repo.InsertAsync(todo);
         Assert.True(id > 0);
+        Assert.Equal("Insert: insert into \"Todos\" (\"Details\", \"Completed\", \"CategoryId\") values (@Details, @Completed, @CategoryId);SELECT LAST_INSERT_ROWID() AS id", repo.LastQuery);
 
         // Test Get
         var todo2 = await repo.GetAsync(id);
@@ -27,6 +29,7 @@ public class RepositoryBaseTests
         Assert.Equal(todo.Details, todo2.Details);
         Assert.Equal(todo.Completed, todo2.Completed);
         Assert.Equal(todo.CategoryId, todo2.CategoryId);
+        //Assert.Equal("GetList<Formula.SimpleRepo.Tests.TodoModel>: Select \"Id\",\"Details\",\"Completed\",\"CategoryId\" from \"Todos\" WHERE Id = @Id\n", repo.LastQuery);
 
         // Test Update
         todo2.Details = "Test 2";
