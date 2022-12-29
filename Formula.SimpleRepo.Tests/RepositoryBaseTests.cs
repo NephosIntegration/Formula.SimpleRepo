@@ -29,7 +29,7 @@ public class RepositoryBaseTests
         Assert.Equal(todo.Details, todo2.Details);
         Assert.Equal(todo.Completed, todo2.Completed);
         Assert.Equal(todo.CategoryId, todo2.CategoryId);
-        //Assert.Equal("GetList<Formula.SimpleRepo.Tests.TodoModel>: Select \"Id\",\"Details\",\"Completed\",\"CategoryId\" from \"Todos\" WHERE Id = @Id\n", repo.LastQuery);
+        Assert.Equal("GetList<Formula.SimpleRepo.Tests.TodoModel>: Select \"Id\",\"Details\",\"Completed\",\"CategoryId\" from \"Todos\" WHERE Id = @Id\n", repo.LastQuery);
 
         // Test Update
         todo2.Details = "Test 2";
@@ -37,6 +37,7 @@ public class RepositoryBaseTests
         todo2.CategoryId = 1;
         var rows = await repo.UpdateAsync(todo2);
         Assert.True(rows > 0);
+        Assert.Equal("Update: update \"Todos\" set \"Details\" = @Details, \"Completed\" = @Completed, \"CategoryId\" = @CategoryId where \"Id\" = @Id", repo.LastQuery);
 
         // Verify the update
         var todo3 = await repo.GetAsync(id);
@@ -44,21 +45,26 @@ public class RepositoryBaseTests
         Assert.Equal(todo2.Details, todo3.Details);
         Assert.Equal(todo2.Completed, todo3.Completed);
         Assert.Equal(todo2.CategoryId, todo3.CategoryId);
+        Assert.Equal("GetList<Formula.SimpleRepo.Tests.TodoModel>: Select \"Id\",\"Details\",\"Completed\",\"CategoryId\" from \"Todos\" WHERE Id = @Id\n", repo.LastQuery);
 
         // Confirm only 2 records
         var recordCount = await repo.Basic.RecordCountAsync();
         Assert.Equal(2, recordCount);
+        Assert.Equal("RecordCount<Formula.SimpleRepo.Tests.TodoModel>: Select count(1) from \"Todos\" ", repo.LastQuery);
 
         // Test Delete
         rows = await repo.DeleteAsync(todo3.Id);
         Assert.True(rows > 0);
+        Assert.Equal("Delete<Formula.SimpleRepo.Tests.TodoModel> Delete from \"Todos\" where \"Id\" = @Id", repo.LastQuery);
 
         // Confirm Delete
         var todo4 = await repo.GetAsync(todo3.Id);
         Assert.Null(todo4);
-
+        Assert.Equal("GetList<Formula.SimpleRepo.Tests.TodoModel>: Select \"Id\",\"Details\",\"Completed\",\"CategoryId\" from \"Todos\" WHERE Id = @Id\n", repo.LastQuery);
+        
         // Confirm only 1 record
         recordCount = await repo.Basic.RecordCountAsync();
         Assert.Equal(1, recordCount);
+        Assert.Equal("RecordCount<Formula.SimpleRepo.Tests.TodoModel>: Select count(1) from \"Todos\" ", repo.LastQuery);
     }
 }

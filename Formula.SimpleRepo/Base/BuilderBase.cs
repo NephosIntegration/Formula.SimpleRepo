@@ -12,8 +12,6 @@ public abstract class BuilderBase<TConstraintsModel>
     : ConstrainableBase<TConstraintsModel>, IBuilder
     where TConstraintsModel : new()
 {
-    protected SqlBuilder _builder = new SqlBuilder();
-
     protected Dictionary<string, object> _parameters { get; set; } = new Dictionary<string, object>();
 
     protected bool _applyScopedConstraints = true; // By default, if we have any scoped constraints they will be applied
@@ -154,12 +152,13 @@ public abstract class BuilderBase<TConstraintsModel>
 
         if (constraints != null && constraints.Count() > 0)
         {
+            var builder = new SqlBuilder();
             foreach (var constraint in constraints)
             {
-                constraint.Bind(_builder).AsList().ForEach(x => output.Parameters[x.Key] = x.Value);
+                constraint.Bind(builder).AsList().ForEach(x => output.Parameters[x.Key] = x.Value);
             }
 
-            output.Sql = _builder.AddTemplate("/**where**/").RawSql;
+            output.Sql = builder.AddTemplate("/**where**/").RawSql;
         }
 
         return CombineParameters(output);
