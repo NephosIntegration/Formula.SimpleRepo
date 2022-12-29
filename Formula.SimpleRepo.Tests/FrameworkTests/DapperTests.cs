@@ -3,7 +3,7 @@ using Microsoft.Data.Sqlite;
 
 namespace Formula.SimpleRepo.Tests;
 
-public class InMemorySqliteTests
+public class DapperTests
 {
     [Fact]
     public void TestInMemorySqlite()
