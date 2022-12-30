@@ -1,5 +1,10 @@
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Collections;
+using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -35,11 +40,35 @@ public abstract class RepositoryBase<TModel, TConstraintsModel>
 
     public virtual Task<int> UpdateAsync(TModel entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null, CancellationToken? token = null)
     {
-        return Basic.UpdateAsync(entityToUpdate, transaction, commandTimeout);
+        if (_applyScopedConstraints)
+        {
+            var obj = JObject.FromObject(entityToUpdate);
+            var parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(obj.ToString());
+            var scopedBindings = Where((List<Constraint>)null);
+            foreach (var kvp in scopedBindings.Parameters)
+            {
+                parameters[kvp.Key] = kvp.Value;
+            }            
+            var j = Basic.UpdateAsync(entityToUpdate, scopedBindings.Sql, parameters, transaction, commandTimeout);
+            return j;
+        }
+        else
+        {
+            return Basic.UpdateAsync(entityToUpdate, transaction, commandTimeout);
+        }
     }
 
     public virtual Task<int> DeleteAsync(object id, IDbTransaction transaction = null, int? commandTimeout = null)
     {
-        return Basic.DeleteAsync(id, transaction, commandTimeout);
+        if (_applyScopedConstraints)
+        {
+            var fields = GetPopulatedIdFields(id);
+            var bindable = Where(fields);
+            return Basic.DeleteListAsync(bindable.Sql, bindable.Parameters, transaction, commandTimeout);
+        }
+        else
+        {
+            return Basic.DeleteAsync(id, transaction, commandTimeout);
+        }
     }
 }

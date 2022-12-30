@@ -349,6 +349,43 @@ public partial class SimpleCRUD
         return connection.ExecuteAsync(new CommandDefinition(sb.ToString(), entityToUpdate, transaction, commandTimeout, cancellationToken: cancelToken));
     }
 
+    public Task<int> UpdateAsync<TEntity>(IDbConnection connection, TEntity entityToUpdate, string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+    {
+        if (string.IsNullOrEmpty(conditions))
+        {
+            throw new ArgumentException("UpdateAsync<TEntity> requires a where clause");
+        }
+        if (!conditions.ToLower().Contains("where"))
+        {
+            throw new ArgumentException("UpdateAsync<TEntity> requires a where clause and must contain the WHERE keyword");
+        }
+
+        var idProps = GetIdProperties(entityToUpdate).ToList();
+
+        if (!idProps.Any())
+        {
+            throw new ArgumentException("Entity must have at least one [Key] or Id property");
+        }
+
+        QueryLogger.Log(entityToUpdate);
+
+        var currenttype = typeof(TEntity);
+        var name = GetTableName(currenttype);
+
+        var sb = new StringBuilder();
+        sb.AppendFormat("update {0}", name);
+
+        sb.AppendFormat(" set ");
+        BuildUpdateSet(entityToUpdate, sb);
+        sb.Append(" " + conditions.Replace("\n", " AND "));
+        BuildWhere<TEntity>(sb, idProps, entityToUpdate);
+
+        _logQuery(string.Format("Update: {0}", sb));
+
+        return connection.ExecuteAsync(sb.ToString(), parameters, transaction, commandTimeout);
+    }
+
+
     /// <summary>
     /// <para>Deletes a record or records in the database that match the object passed in asynchronously</para>
     /// <para>-By default deletes records in the table matching the class name</para>

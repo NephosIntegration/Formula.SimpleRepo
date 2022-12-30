@@ -57,4 +57,9 @@ public abstract class BasicCRUDBase<TModel, TConstraintsModel>
         return BasicSimpleCRUD.UpdateAsync<TModel>(_connection, entityToUpdate, transaction, commandTimeout, token);
     }
 
+    public virtual Task<int> UpdateAsync(TModel entityToUpdate, string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+    {
+        return BasicSimpleCRUD.UpdateAsync<TModel>(_connection, entityToUpdate, conditions, parameters, transaction, commandTimeout);
+    }
+
 }
