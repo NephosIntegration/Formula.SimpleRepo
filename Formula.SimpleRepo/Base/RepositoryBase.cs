@@ -1,10 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -33,6 +31,18 @@ public abstract class RepositoryBase<TModel, TConstraintsModel>
         }
     }
 
+    public new IReadOnlyRepository<TModel> ApplyScopedConstraints()
+    {
+        base.ApplyScopedConstraints();
+        return this;
+    }
+
+    public new IRepository<TModel> RemoveScopedConstraints()
+    {
+        base.RemoveScopedConstraints();
+        return this;
+    }
+
     public virtual Task<int?> InsertAsync(TModel entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
     {
         return Basic.InsertAsync(entityToInsert, transaction, commandTimeout);
@@ -49,8 +59,7 @@ public abstract class RepositoryBase<TModel, TConstraintsModel>
             {
                 parameters[kvp.Key] = kvp.Value;
             }            
-            var j = Basic.UpdateAsync(entityToUpdate, scopedBindings.Sql, parameters, transaction, commandTimeout);
-            return j;
+            return Basic.UpdateAsync(entityToUpdate, scopedBindings.Sql, parameters, transaction, commandTimeout);
         }
         else
         {

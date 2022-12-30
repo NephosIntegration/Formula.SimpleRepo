@@ -48,6 +48,18 @@ public abstract class ReadOnlyRepositoryBase<TModel, TConstraintsModel>
         QueryLogger.DefaultLogQuery(query);
     }
 
+    public new IReadOnlyRepository<TModel> ApplyScopedConstraints()
+    {
+        base.ApplyScopedConstraints();
+        return this;
+    }
+
+    public new IReadOnlyRepository<TModel> RemoveScopedConstraints()
+    {
+        base.RemoveScopedConstraints();
+        return this;
+    }
+
     public List<string> GetIdFields()
     {
         var type = typeof(TModel);
@@ -139,7 +151,6 @@ public abstract class ReadOnlyRepositoryBase<TModel, TConstraintsModel>
         var results = await GetAsync(bindable, transaction, commandTimeout);
         return results.FirstOrDefault();
     }
-
 
     public Task<IEnumerable<TModel>> GetAsync(IDbTransaction transaction = null, int? commandTimeout = null)
     {

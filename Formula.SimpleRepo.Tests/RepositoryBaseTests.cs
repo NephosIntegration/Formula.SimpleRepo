@@ -1,4 +1,4 @@
-using Microsoft.Data.Sqlite;
+using Dapper;
 using System.Collections;
 
 namespace Formula.SimpleRepo.Tests;
@@ -6,7 +6,7 @@ namespace Formula.SimpleRepo.Tests;
 public class RepositoryBaseTests
 {
     [Fact]
-    public async Task RepositoryBase_Basics()
+    public async Task RepositoryBase_Verify_SQL()
     {
         using (var connection = DatabasePrimer.CreateTodoDatabase())
         {
@@ -115,13 +115,115 @@ public class RepositoryBaseTests
             Assert.NotNull(results);      
             var count = results.Count();
             Assert.Equal(2, count);
+
+            // Verify the SQL produced by the custom constraint
             Assert.Equal("GetList<Formula.SimpleRepo.Tests.TodoModel>: Select \"Id\",\"DetailsColumn\" as \"Details\",\"Completed\",\"CategoryId\",\"Deleted\" from \"Todos\" WHERE UPPER(DetailsColumn) like @DetailsLike AND Deleted = @Deleted\n", repo.LastQuery);
 
             results = await repo.GetAsync("{DetailsLike:'Shopping'}");
             Assert.NotNull(results);      
             count = results.Count();
             Assert.Equal(3, count);
-            Assert.Equal("GetList<Formula.SimpleRepo.Tests.TodoModel>: Select \"Id\",\"DetailsColumn\" as \"Details\",\"Completed\",\"CategoryId\",\"Deleted\" from \"Todos\" WHERE UPPER(DetailsColumn) like @DetailsLike AND Deleted = @Deleted\n", repo.LastQuery);
+
+            connection.Close();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
+    }
+
+    [Fact]
+    public async Task RepositoryBase_Scoped_Constraints()
+    {
+        using (var connection = DatabasePrimer.CreateTodoDatabase())
+        {
+            var repo = new TodoRepository(SettingsHelper.Configuration);
+
+            // There are 2 records total in the database
+            var recordCount = await repo.Basic.RecordCountAsync();
+            Assert.Equal(2, recordCount);
+
+            // There is only one record that is not deleted
+            var results = await repo.GetAsync();
+            Assert.NotNull(results);      
+            var count = results.Count();
+            Assert.Equal(1, count);
+
+            // There are 2 records in the database when you remove the scoped constraints
+            results = await repo.RemoveScopedConstraints().GetAsync();
+            Assert.NotNull(results);      
+            count = results.Count();
+            Assert.Equal(2, count);
+
+            // Must be re-applied to put everything back
+            results = await repo.ApplyScopedConstraints().GetAsync();
+            Assert.NotNull(results);      
+            count = results.Count();
+            Assert.Equal(1, count);
+
+            // Insert a new one to play around with
+            var todo = new TodoModel { Details = "Scoped 1", Completed = false, Style = "Blue" };
+            var id = await repo.InsertAsync(todo);
+            Assert.True(id > 0);
+
+            // With scoped constraints applied our updates must follow the rules
+            todo = await repo.GetAsync(id);
+            Assert.NotNull(todo);
+            Assert.Equal("Scoped 1", todo.Details);
+
+            // Using dapper instead of the repository let's mark the record as deleted
+            connection.Execute("update Todos set Deleted = 1 where Id = @Id", new { Id = id });
+
+            // If we attempt to update the record it will fail because the scoped constraints are applied
+            todo.Details = "Scoped Changed";
+            todo.Deleted = true;
+            var updatedRecords = await repo.UpdateAsync(todo);
+            Assert.Equal(0, updatedRecords);
+
+            // Un-delete it using dapper
+            connection.Execute("update Todos set Deleted = 0 where Id = @Id", new { Id = id });
+
+            // There shouldn't be any observed changes to the record because it was out of scope.
+            todo = await repo.GetAsync(id);
+            Assert.NotNull(todo);
+            Assert.Equal("Scoped 1", todo.Details);
+
+            // However, if we remove the scoped constraints we can update the record
+
+            // Using dapper instead of the repository let's mark the record as deleted
+            connection.Execute("update Todos set Deleted = 1 where Id = @Id", new { Id = id });
+
+            todo.Details = "Scoped Changed";
+            todo.Deleted = true;
+            updatedRecords = await repo.RemoveScopedConstraints().UpdateAsync(todo);
+            Assert.Equal(1, updatedRecords);
+
+            // The record should be updated
+            todo = await repo.RemoveScopedConstraints().GetAsync(id);
+            Assert.NotNull(todo);
+            Assert.Equal("Scoped Changed", todo.Details);
+
+            // Re-apply the scoped constraints, and we won't be abel to fetch the record anymore
+            todo = await repo.ApplyScopedConstraints().GetAsync(id);
+            Assert.Null(todo);
+
+            // There are now technically 3 records in the database even though we can't see all of them
+            recordCount = await repo.Basic.RecordCountAsync();
+            Assert.Equal(3, recordCount);
+
+            // We can only see 1 record
+            recordCount = (await repo.GetAsync()).Count();
+            Assert.Equal(1, recordCount);
+
+            // Scoped constraints also apply to the deletes
+            var deletedRecords = await repo.DeleteAsync(id);
+            Assert.Equal(0, deletedRecords);
+            recordCount = await repo.Basic.RecordCountAsync();
+            Assert.Equal(3, recordCount);
+
+            // Remove the scoped constraints and we can delete the record
+            deletedRecords = await repo.RemoveScopedConstraints().DeleteAsync(id);
+            Assert.Equal(1, deletedRecords);
+            recordCount = await repo.Basic.RecordCountAsync();
+            Assert.Equal(2, recordCount);
 
             connection.Close();
             GC.Collect();
