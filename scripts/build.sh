@@ -41,7 +41,7 @@ function getNugetAPIKey() {
 function nuget() {
     getNugetAPIKey
     cleanBuild
-    cp README.md README.txt
+    cp ../README.md README.txt
     dotnet pack
     rm README.txt
     dotnet nuget push ./bin/Debug/$projectName.$version.nupkg -k $apikey -s https://api.nuget.org/v3/index.json
