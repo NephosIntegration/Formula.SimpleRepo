@@ -1,6 +1,6 @@
 #!/bin/bash
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd $DIR/..
+cd $DIR/../Formula.SimpleRepo
 
 projectFile=$(ls *.csproj)
 projectName=${projectFile::-7}
