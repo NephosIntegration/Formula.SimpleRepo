@@ -12,7 +12,7 @@ public abstract class ConstrainableBase<TConstraintsModel>
     : IConstrainable
     where TConstraintsModel : new()
 {
-    public string GetDatabaseColumnName(PropertyInfo prop)
+    protected string GetDatabaseColumnName(PropertyInfo prop)
     {
         var details = prop.GetCustomAttributes(typeof(Dapper.ColumnAttribute), true).FirstOrDefault() as Dapper.ColumnAttribute;
 
