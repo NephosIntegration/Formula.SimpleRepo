@@ -21,7 +21,6 @@
 ## 1.6.1
 
 - ADS-7146 - Refactored SimpleCrud from static to needing to be instantiated / injected to solve encapsulation problems under load (everything needed to be scoped instead of global)
-
 - ADS-6437 - Parameters don't clear on re-use of same repository
-
 - Added Unit tests
+- Added workflows / actions
