@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>Formula.SimpleRepo</AssemblyName>
     <PackageId>Formula.SimpleRepo</PackageId>
-    <Version>1.6.2</Version>
+    <Version>1.6.3</Version>
     <PackageTags>utilities</PackageTags>
     <Title>Formula Repo</Title>
     <Description>Easy repositories for .Net built on Dapper.</Description>
@@ -14,11 +14,12 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
   <ItemGroup>
-    <Content Include="README.txt">
-      <Pack>true</Pack>
-      <PackagePath>README.txt</PackagePath>
-    </Content>
+    <None Include="README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>  
 
   <ItemGroup>
