@@ -49,7 +49,7 @@ jobs:
         hide_complexity: false
         indicators: true
         output: both
-        thresholds: '60 80'
+        thresholds: '50 75'
 
     - name: Upload Test Results
       uses: actions/upload-artifact@v3
