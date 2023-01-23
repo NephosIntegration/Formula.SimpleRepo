@@ -6,7 +6,9 @@ on:
 
 jobs:
   build:
-
+    environment:
+      name: production
+      
     runs-on: ubuntu-latest
 
     steps:
@@ -30,7 +32,7 @@ jobs:
       run: dotnet publish -c Release
 
     - name: Copy Readme
-      run: cp README.md ./Formula.SimpleRepo/README.txt
+      run: cp README.md ./Formula.SimpleRepo/README.md
 
     - name: Pack
       run: dotnet pack
