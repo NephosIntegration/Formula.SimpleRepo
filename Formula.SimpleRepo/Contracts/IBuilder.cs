@@ -10,4 +10,5 @@ public interface IBuilder : IConstrainable
     Bindable Where(Hashtable constraints);
     Bindable Where(JObject json);
     Bindable WhereFromJson(string json);
+    Bindable ConstraintsToBindable(List<Constraint> constraints);
 }

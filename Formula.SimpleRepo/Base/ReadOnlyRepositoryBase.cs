@@ -68,6 +68,32 @@ public abstract class ReadOnlyRepositoryBase<TModel, TConstraintsModel>
         return properties.Select(i => i.Name).ToList();
     }
 
+    protected bool IsNativeType(object o)
+    {
+        return o.GetType().IsPrimitive ||
+               new Type[] {
+                    typeof(Decimal),
+                    typeof(String),
+                    typeof(DateTime),
+                    typeof(DateTimeOffset),
+                    typeof(TimeSpan),
+                    typeof(Guid)
+               }.Contains(o.GetType()) ||
+               Convert.GetTypeCode(o) != TypeCode.Object;
+    }
+
+    protected object GetPropertyValue(object o, string propertyName)
+    {
+        if (IsNativeType(o))
+        {
+            return o;
+        }
+        else
+        {
+            return o.GetType().GetProperty(propertyName).GetValue(o, null);
+        }
+    }
+
     public Hashtable GetPopulatedIdFields(object value)
     {
         var output = new Hashtable();
@@ -75,7 +101,7 @@ public abstract class ReadOnlyRepositoryBase<TModel, TConstraintsModel>
         var fields = GetIdFields();
         foreach (var field in fields)
         {
-            output.Add(field, value);
+            output.Add(field, GetPropertyValue(value, field));
         }
 
         return output;
