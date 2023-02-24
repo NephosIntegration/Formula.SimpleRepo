@@ -84,6 +84,12 @@ public abstract class RepositoryBase<TModel, TConstraintsModel>
         return facts;
     }
 
+    /// <summary>
+    /// Update the properties of an object based on a dictionary of key/value pairs
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <param name="values"></param>
+    /// <returns></returns>
     public TModel UpdateModelProperties(TModel obj, Dictionary<string, object> values)
     {
         var type = obj.GetType();
