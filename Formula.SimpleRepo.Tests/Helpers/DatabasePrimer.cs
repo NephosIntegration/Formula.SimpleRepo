@@ -10,7 +10,7 @@ public class DatabasePrimer
         var connection = new SqliteConnection(SettingsHelper.GetConnectionString());
         connection.Open();
 
-        // Create a test table
+        // Create a todo table
         connection.Execute(@"
             CREATE TABLE Todos (
                 id INTEGER PRIMARY KEY,
@@ -21,9 +21,20 @@ public class DatabasePrimer
                 deleted BIT NOT NULL DEFAULT 0
             )");
 
-        // Insert a test row
+        // Insert some todo row's
         connection.Execute("INSERT INTO Todos (id, detailsColumn, completed, categoryId, style, deleted) VALUES (1, 'Finish Coding', 0, 1, 'red', 0)");
         connection.Execute("INSERT INTO Todos (id, detailsColumn, completed, categoryId, style, deleted) VALUES (2, 'Build Unit Tests', 1, 2, 'blue', 1)");
+
+        // Create a test table
+        connection.Execute(@"
+            CREATE TABLE Tests (
+                uniqueId INTEGER PRIMARY KEY,
+                testData NVARCHAR(100) NULL,
+                ownedBy NVARCHAR(100) NOT NULL DEFAULT 'system'
+            )");
+
+        connection.Execute("INSERT INTO Tests (uniqueId, testData, ownedBy) VALUES (1, 'Test 1', 'system')");
+        connection.Execute("INSERT INTO Tests (uniqueId, testData, ownedBy) VALUES (2, 'Test 2', 'user1')");
 
         return connection;
     }

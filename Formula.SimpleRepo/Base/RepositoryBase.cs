@@ -3,6 +3,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -43,68 +45,83 @@ public abstract class RepositoryBase<TModel, TConstraintsModel>
         return this;
     }
 
-    public virtual Task<int?> InsertAsync(TModel entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
-    {
-        return Basic.InsertAsync(entityToInsert, transaction, commandTimeout);
-    }
-
     /// <summary>
     /// Produce a list of constraints based on the populated fields of the entity
     /// </summary>
     /// <param name="entity"></param>
     /// <returns></returns>
-    protected EntityParts Inspect(TModel entity)
+    protected QueryFacts Inspect(TModel entity)
     {
-        var parts = new EntityParts();
+        var facts = new QueryFacts();
 
-        parts.JSONObject = JObject.FromObject(entity);
-        parts.Params = JsonConvert.DeserializeObject<Dictionary<string, object>>(parts.JSONObject.ToString());
-        parts.IdFields = GetPopulatedIdFields(entity);
-        parts.IdConstraints = GetConstraints(parts.IdFields);
+        facts.IdFields = GetPopulatedIdFields(entity);
+        facts.IdConstraints = GetConstraints(facts.IdFields);
 
         // To allow for scoped constraints in the outside repository to be applied, we need to supply all
         // possible constraints for any decision making that may be done in the implemented repository
-        parts.ScopedConstraints = ScopedConstraints(parts.IdConstraints);
+        facts.ScopedConstraints = ScopedConstraints(facts.IdConstraints);
 
-        parts.AllConstraints = MergeConstraints(parts.IdConstraints, parts.ScopedConstraints);
+        facts.AllConstraints = MergeConstraints(facts.IdConstraints, facts.ScopedConstraints);
 
-        return parts;
+        // But the only "predicate" we put on our update statement
+        // is based on the scoped constraints and the id fields
+        // The id fields will be added in the actual Basic.UpdateAsync call
+        facts.ScopedBindings = ConstraintsToBindable(facts.ScopedConstraints);
+
+        // We need to get a list of parameters representing the entity values
+        var obj = JObject.FromObject(entity);
+        
+        // Convert obj to a dictionary of key/value pairs
+        var entityValueParams = obj.Properties()
+            .Where(x => x.Value.Type != JTokenType.Null)
+            .ToDictionary(x => x.Name, x => x.Value.ToObject<object>());
+
+        // combine entity value parameters with the scoped binding parameters overwriting any duplicate keys (preserving what the scope would apply the value as)
+        facts.SanitizedValues = facts.ScopedBindings.Parameters.Concat(entityValueParams)
+            .GroupBy(x => x.Key)
+            .ToDictionary(x => x.Key, x => x.First().Value);
+
+        return facts;
     }
 
-    /// <summary>
-    /// We can't allow items to be updated that don't match the scoped scoped values
-    /// </summary>
-    /// <param name="entity"></param>
-    /// <returns></returns>
-    protected EntityParts Sanitize(TModel entity)
+    public TModel UpdateModelProperties(TModel obj, Dictionary<string, object> values)
     {
-        var parts = Inspect(entity);
+        var type = obj.GetType();
+        var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-        // Allow the repository implementation to do any transformations it needs to do
-        var transformed = Where(parts.AllConstraints);
-
-        // Update the parameters with the transformed and scope applied values
-        foreach (var kvp in transformed.Parameters)
+        foreach (var property in properties)
         {
-            parts.Params[kvp.Key] = kvp.Value;
+            if (values.ContainsKey(property.Name))
+            {
+                var value = values[property.Name];
+                if (value != null)
+                {
+                    property.SetValue(obj, value);
+                }
+            }
         }
 
-        return parts;
+        return obj;
+    }    
+
+    public virtual Task<int?> InsertAsync(TModel entityToInsert, IDbTransaction transaction = null, int? commandTimeout = null)
+    {
+        if (_applyScopedConstraints)
+        {
+            var facts = Inspect(entityToInsert);
+            UpdateModelProperties(entityToInsert, facts.SanitizedValues);
+        }
+
+        return Basic.InsertAsync(entityToInsert, transaction, commandTimeout);
     }
 
     public virtual Task<int> UpdateAsync(TModel entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null, CancellationToken? token = null)
     {
         if (_applyScopedConstraints)
         {
-            // Sanitize the parameters
-            var sanitized = Sanitize(entityToUpdate);
-
-            // But the only "predicate" we put on our update statement
-            // is based on the scoped constraints and the id fields
-            // The id fields will be added in the actual Basic.UpdateAsync call
-            var bindings = ConstraintsToBindable(sanitized.ScopedConstraints);
-
-            return Basic.UpdateAsync(entityToUpdate, bindings.Sql, sanitized.Params, transaction, commandTimeout);
+            var facts = Inspect(entityToUpdate);
+            UpdateModelProperties(entityToUpdate, facts.SanitizedValues);
+            return Basic.UpdateAsync(entityToUpdate, facts.ScopedBindings.Sql, entityToUpdate, transaction, commandTimeout);
         }
         else
         {

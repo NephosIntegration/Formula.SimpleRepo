@@ -1,15 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
 
 namespace Formula.SimpleRepo;
 
-public class EntityParts
+public class QueryFacts
 {
-    public JObject JSONObject { get; set; }
-    public Dictionary<string, object> Params { get; set; }
     public Hashtable IdFields { get; set; }
     public List<Constraint> IdConstraints { get; set; }
     public List<Constraint> ScopedConstraints { get; set; }
     public List<Constraint> AllConstraints { get; set; }
+    public Bindable ScopedBindings { get; set; }
+    public Dictionary<string, object> SanitizedValues { get; set; }
 }
