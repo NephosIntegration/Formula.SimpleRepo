@@ -136,6 +136,24 @@ public abstract class BuilderBase<TConstraintsModel>
         return bindable;
     }
 
+    public Bindable ConstraintsToBindable(List<Constraint> constraints)
+    {
+        var output = new Bindable();
+
+        if (constraints != null && constraints.Count() > 0)
+        {
+            var builder = new SqlBuilder();
+            foreach (var constraint in constraints)
+            {
+                constraint.Bind(builder).AsList().ForEach(x => output.Parameters[x.Key] = x.Value);
+            }
+
+            output.Sql = builder.AddTemplate("/**where**/").RawSql;
+        }
+
+        return CombineParameters(output);
+    }
+
     public Bindable Where(List<Constraint> currentConstraints)
     {
         var output = new Bindable();
@@ -150,18 +168,7 @@ public abstract class BuilderBase<TConstraintsModel>
         // Give a last chance for the outside world (aka repository) to modify the behavior of the constraints
         var constraints = TransformConstraints(combined);
 
-        if (constraints != null && constraints.Count() > 0)
-        {
-            var builder = new SqlBuilder();
-            foreach (var constraint in constraints)
-            {
-                constraint.Bind(builder).AsList().ForEach(x => output.Parameters[x.Key] = x.Value);
-            }
-
-            output.Sql = builder.AddTemplate("/**where**/").RawSql;
-        }
-
-        return CombineParameters(output);
+        return ConstraintsToBindable(constraints);
     }
 
     public Bindable Where(Hashtable constraints)

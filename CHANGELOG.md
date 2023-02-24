@@ -24,3 +24,6 @@
 - ADS-6437 - Parameters don't clear on re-use of same repository
 - Added Unit tests
 - Added workflows / actions
+
+## 1.6.4
+- Ensure scoped constraints are applied on inserts and updates
