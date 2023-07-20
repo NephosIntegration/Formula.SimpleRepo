@@ -1048,7 +1048,12 @@ public partial class SimpleCRUD
                     tableName = string.Format("{0}.{1}", schemaName, tableName);
                 }
 
-                if (tableattr.Parameters != null && tableattr.Parameters.Length > 0)
+                if (tableattr.NoParametersFunction)
+                {
+                    tableName = _tableFunctionSql.Replace("{TableName}", tableName);
+                    tableName = tableName.Replace("{TableParams}", "");
+                }
+                else if (tableattr.Parameters != null && tableattr.Parameters.Length > 0)
                 {
                     tableName = _tableFunctionSql.Replace("{TableName}", tableName);
                     var parameterized = new List<string>();
@@ -1111,6 +1116,11 @@ public class TableAttribute : Attribute
     /// </summary>
     /// <value></value>
     public string[] Parameters { get; set; }
+
+    /// <summary>
+    /// If true, is a table function with no parameters
+    /// </summary>
+    public bool NoParametersFunction { get; set; }
 }
 
 /// <summary>
@@ -1233,12 +1243,12 @@ public class IgnoreUpdateAttribute : Attribute
 
 internal static class TypeExtension
 {
-//You can't insert or update complex types. Lets filter them out.
-public static bool IsSimpleType(this Type type)
-{
-    var underlyingType = Nullable.GetUnderlyingType(type);
-    type = underlyingType ?? type;
-    var simpleTypes = new List<Type>
+    //You can't insert or update complex types. Lets filter them out.
+    public static bool IsSimpleType(this Type type)
+    {
+        var underlyingType = Nullable.GetUnderlyingType(type);
+        type = underlyingType ?? type;
+        var simpleTypes = new List<Type>
                            {
                                typeof(byte),
                                typeof(sbyte),
@@ -1260,11 +1270,11 @@ public static bool IsSimpleType(this Type type)
                                typeof(TimeSpan),
                                typeof(byte[])
                            };
-    return simpleTypes.Contains(type) || type.IsEnum;
-}
+        return simpleTypes.Contains(type) || type.IsEnum;
+    }
 
-public static string CacheKey(this IEnumerable<PropertyInfo> props)
-{
-    return string.Join(",", props.Select(p => p.DeclaringType.FullName + "." + p.Name).ToArray());
-}
+    public static string CacheKey(this IEnumerable<PropertyInfo> props)
+    {
+        return string.Join(",", props.Select(p => p.DeclaringType.FullName + "." + p.Name).ToArray());
+    }
 }
