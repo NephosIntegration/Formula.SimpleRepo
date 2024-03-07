@@ -5,7 +5,7 @@ namespace Formula.SimpleRepo.Tests;
 public class ConstraintTests
 {
     private const string QUERY_NULL = "WHERE DatabaseColumnName IS NULL\n";
-    private const string QUERY_DEFAULT = "WHERE DatabaseColumnName = @DatabaseColumnName\n";
+    private const string QUERY_DEFAULT = "WHERE DatabaseColumnName = @Column\n";
 
     [Fact]
     public void Constraint_String_Bind()
@@ -15,7 +15,7 @@ public class ConstraintTests
         var builder = new SqlBuilder();
         var bindable = constraint.Bind(builder);
 
-        Assert.Equal("DatabaseColumnName", bindable.Keys.FirstOrDefault());
+        Assert.Equal("Column", bindable.Keys.FirstOrDefault());
         Assert.Equal("Value", bindable.Values.FirstOrDefault());
         var sql = builder.AddTemplate("/**where**/").RawSql;
         Assert.Equal(QUERY_DEFAULT, sql);
@@ -29,7 +29,7 @@ public class ConstraintTests
         var builder = new SqlBuilder();
         var bindable = constraint.Bind(builder);
 
-        Assert.Equal("DatabaseColumnName", bindable.Keys.FirstOrDefault());
+        Assert.Equal("Column", bindable.Keys.FirstOrDefault());
         Assert.Equal(4, bindable.Values.FirstOrDefault());
         var sql = builder.AddTemplate("/**where**/").RawSql;
         Assert.Equal(QUERY_DEFAULT, sql);
@@ -44,7 +44,7 @@ public class ConstraintTests
         var builder = new SqlBuilder();
         var bindable = constraint.Bind(builder);
 
-        Assert.Equal("DatabaseColumnName", bindable.Keys.FirstOrDefault());
+        Assert.Equal("Column", bindable.Keys.FirstOrDefault());
         Assert.Equal(now, bindable.Values.FirstOrDefault());
         var sql = builder.AddTemplate("/**where**/").RawSql;
         Assert.Equal(QUERY_DEFAULT, sql);

@@ -59,7 +59,7 @@ public class RepositoryBaseTests
             Assert.NotNull(list);
             var count = list.Count();
             Assert.Equal(1, count); // Should only be one since we are constraining it
-            Assert.Equal("GetListPaged<Formula.SimpleRepo.Tests.TodoModel>: Select \"Id\",\"DetailsColumn\" as \"Details\",\"Completed\",\"CategoryId\",\"Deleted\" from \"Todos\" WHERE DetailsColumn = @DetailsColumn AND Deleted = @Deleted\n Order By Id LIMIT 10 OFFSET ((1-1) * 10)", repo.LastQuery);
+            Assert.Equal("GetListPaged<Formula.SimpleRepo.Tests.TodoModel>: Select \"Id\",\"DetailsColumn\" as \"Details\",\"Completed\",\"CategoryId\",\"Deleted\" from \"Todos\" WHERE DetailsColumn = @Details AND Deleted = @Deleted\n Order By Id LIMIT 10 OFFSET ((1-1) * 10)", repo.LastQuery);
 
             // Test GetListAsync
             var list2 = await repo.GetAsync();
@@ -262,7 +262,7 @@ public class RepositoryBaseTests
             Assert.NotNull(results);      
             count = results.Count();
             Assert.Equal(1, count);
-            Assert.Equal("GetList<Formula.SimpleRepo.Tests.TodoModel>: Select \"Id\",\"DetailsColumn\" as \"Details\",\"Completed\",\"CategoryId\",\"Deleted\" from \"Todos\" WHERE DetailsColumn = @DetailsColumn AND Deleted = @Deleted\n", repo.LastQuery);
+            Assert.Equal("GetList<Formula.SimpleRepo.Tests.TodoModel>: Select \"Id\",\"DetailsColumn\" as \"Details\",\"Completed\",\"CategoryId\",\"Deleted\" from \"Todos\" WHERE DetailsColumn = @Details AND Deleted = @Deleted\n", repo.LastQuery);
 
             // Ensure a previously executed query does not affect the current query
             results = await repo.GetAsync("{Completed:false}");
@@ -283,4 +283,40 @@ public class RepositoryBaseTests
             GC.WaitForPendingFinalizers();
         }
     }
+
+    [Fact]
+    public async Task RepositoryBase_Scoped_Constraints_Honored_On_Update_And_Insert()
+    {
+        using (var connection = DatabasePrimer.CreateTodoDatabase())
+        {
+            var repo = new TestRepository(SettingsHelper.Configuration);
+
+            // Create a record to play with
+            await repo.InsertAsync(new TestModel { TestData = "Scoped Insert Test", Owner = "Billy Bob" });
+
+            // Get the record
+            var test = await repo.GetAsync("{TestData:'Scoped Insert Test'}");
+            Assert.NotNull(test);
+            var count = test.Count();
+            Assert.Equal(1, count);
+            var rec = test.First();
+            Assert.Equal("Scoped Insert Test", rec.TestData);
+            Assert.Equal("user1", rec.Owner);
+            var id = rec.Id;
+
+            // Update the record (should fail to set owner to another value because the scoped constraints are applied)
+            rec.TestData = "Scoped Update Test";
+            rec.Owner = "John Doe"; // This shouldn't be honored
+            var updatedRecords = await repo.UpdateAsync(rec);
+            Assert.Equal(1, updatedRecords);
+            Assert.Equal("Update: update \"Tests\" set \"testData\" = @TestData, \"ownedBy\" = @Owner WHERE ownedBy = @Owner AND \"uniqueId\" = @Id", repo.LastQuery);
+
+            // Get the record again
+            rec = await repo.GetAsync(id);
+            Assert.Equal("Scoped Update Test", rec.TestData);
+            Assert.Equal(id, rec.Id);
+            Assert.Equal("user1", rec.Owner);
+        }
+    }
+
 }

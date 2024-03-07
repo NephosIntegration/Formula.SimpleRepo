@@ -113,7 +113,7 @@ public class Constraint : IConstraint
             try
             {
                 var convertedValue = Convert.ChangeType(Value, DataType);
-                parameters.Add(DatabaseColumnName, convertedValue);
+                parameters.Add(Column, convertedValue);
             }
             catch (FormatException ex)
             {
@@ -136,7 +136,7 @@ public class Constraint : IConstraint
     {
         if (Comparison == Comparison.Equals)
         {
-            builder.Where($"{DatabaseColumnName} = @{DatabaseColumnName}");
+            builder.Where($"{DatabaseColumnName} = @{Column}");
         }
         else if (Comparison == Comparison.Null)
         {
