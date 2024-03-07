@@ -6,7 +6,8 @@ name: Build and Test
 on:
   pull_request:
     branches: [ "master", "release", "reviewed/*" ]
-
+  workflow_dispatch:  # This line enables manual dispatch
+  
 jobs:
   build:
 

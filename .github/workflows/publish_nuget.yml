@@ -3,6 +3,7 @@ name: Publish Nuget
 on:
   push:
     branches: [ "master" ]
+  workflow_dispatch:  # This line enables manual dispatch
 
 jobs:
   build:
