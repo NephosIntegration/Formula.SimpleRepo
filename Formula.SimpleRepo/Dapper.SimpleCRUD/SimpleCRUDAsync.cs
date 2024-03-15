@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Formula.SimpleRepo;
@@ -295,6 +296,13 @@ public partial class SimpleCRUD
         else
         {
             keyHasPredefinedValue = true;
+        }
+
+        var insertSuffixAttribute = typeof(TEntity).GetCustomAttribute<InsertSuffixAttribute>();
+        if (insertSuffixAttribute != null)
+        {
+            sb.Append(" "); // Ensure there is space before appending the suffix
+            sb.Append(insertSuffixAttribute.Suffix);
         }
 
         _logQuery(string.Format("Insert: {0}", sb));
