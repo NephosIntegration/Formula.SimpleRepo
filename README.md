@@ -509,6 +509,25 @@ public class MyRepo : ReadOnlyRepositoryBase<MyOutputModel, MyConstraintsModel>
 }
 ```
 
+## InsertSuffix Attribute
+
+The `InsertSuffix` attribute can be used to provide a suffix to the insert statement. This is useful for certain databases that require a suffix to be added to the insert statement. For example, in DB2, you might want to add `WITH NONE` to the end of the insert statement.
+
+```c#
+[InsertSuffix("WITH NONE")]
+public class MyModel
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+}
+```
+
+When doing in insert, the insert statement will be appended with the suffix.
+
+```sql
+INSERT INTO MY_TABLE (ID, NAME) VALUES (@Id, @Name) WITH NONE
+```
+
 ## (Optional) Step 6 - Expose via API
 
 The [Formula.SimpleAPI](https://github.com/NephosIntegration/Formula.SimpleAPI) project provides utilities to expose your repository as a RESTful API.

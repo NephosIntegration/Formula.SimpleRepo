@@ -319,4 +319,17 @@ public class RepositoryBaseTests
         }
     }
 
+    [Fact]
+    public async Task RepositoryBase_Insert_Suffix()
+    {
+        using (var connection = DatabasePrimer.CreateTodoDatabase())
+        {
+            var repo = new TestInsertSuffixRepository(SettingsHelper.Configuration);
+
+            // Create a record to play with
+            await repo.InsertAsync(new TestInsertSuffixModel { Id=1, Owner="me", TestData = "Insert Suffix Test" });
+            Assert.Equal("Insert: insert into \"Tests\" (\"testData\", \"ownedBy\") values (@TestData, @Owner) ; -- Comment", repo.LastQuery);
+        }
+    }
+
 }
