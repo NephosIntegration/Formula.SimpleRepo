@@ -3,12 +3,12 @@
   <PropertyGroup>
     <AssemblyName>Formula.SimpleRepo</AssemblyName>
     <PackageId>Formula.SimpleRepo</PackageId>
-    <Version>1.6.7</Version>
+    <Version>1.8.7</Version>
     <PackageTags>utilities</PackageTags>
     <Title>Formula Repo</Title>
     <Description>Easy repositories for .Net built on Dapper.</Description>
     <Authors>Joshua Williams</Authors>  
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <RepositoryUrl>https://github.com/NephosIntegration/Formula.SimpleRepo</RepositoryUrl>
     <PackageProjectUrl>https://github.com/NephosIntegration/Formula.SimpleRepo</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -19,16 +19,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="\"/>
+    <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>  
 
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.0.123" />
+    <PackageReference Include="Dapper" Version="2.1.35" />
     <PackageReference Include="Dapper.SqlBuilder" Version="2.0.78" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
   </ItemGroup>
 
