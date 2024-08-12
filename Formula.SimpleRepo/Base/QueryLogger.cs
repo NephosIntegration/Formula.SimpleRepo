@@ -8,12 +8,12 @@ public class QueryLogger
 {
     public delegate void LogQueryDelegate(string query);
 
-#if DEBUG
     public static LogQueryDelegate DefaultLogQuery = (query) =>
     {
+#if DEBUG
         Debug.WriteLine(query);
-    };
 #endif
+    };
     // Function to log the dictionary of parameters
     public static void Log(Dictionary<string, object> parameters)
     {
