@@ -8,14 +8,12 @@ public class QueryLogger
 {
     public delegate void LogQueryDelegate(string query);
 
+#if DEBUG
     public static LogQueryDelegate DefaultLogQuery = (query) =>
     {
-        if (Debugger.IsAttached)
-        {
-            Debug.WriteLine(query);
-        }
+        Debug.WriteLine(query);
     };
-
+#endif
     // Function to log the dictionary of parameters
     public static void Log(Dictionary<string, object> parameters)
     {
@@ -49,7 +47,7 @@ public class QueryLogger
                         {
                             value = p.GetValue(obj)?.ToString() ?? "null";
                         }
-                        catch(Exception ex)
+                        catch (Exception ex)
                         {
                             value = $"ERROR: {ex.Message}";
                         }
@@ -61,7 +59,7 @@ public class QueryLogger
                     Debug.WriteLine(obj.ToString());
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Debug.WriteLine($"ERROR: {ex.Message}");
             }
