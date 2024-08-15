@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>Formula.SimpleRepo</AssemblyName>
     <PackageId>Formula.SimpleRepo</PackageId>
-    <Version>1.8.0</Version>
+    <Version>1.8.1-beta</Version>
     <PackageTags>utilities</PackageTags>
     <Title>Formula Repo</Title>
     <Description>Easy repositories for .Net built on Dapper.</Description>
