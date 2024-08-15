@@ -10,22 +10,23 @@ public class QueryLogger
 
     public static LogQueryDelegate DefaultLogQuery = (query) =>
     {
-#if DEBUG
-        Debug.WriteLine(query);
-#endif
+        if (Debugger.IsAttached) 
+        { 
+            Console.WriteLine(query); 
+        }
     };
     // Function to log the dictionary of parameters
     public static void Log(Dictionary<string, object> parameters)
     {
         if (Debugger.IsAttached && (parameters?.Count ?? 0) > 0)
         {
-            Debug.WriteLine("==================");
-            Debug.WriteLine("*** Parameters:");
+            Trace.WriteLine("==================");
+            Trace.WriteLine("*** Parameters:");
             foreach (var p in parameters)
             {
-                Debug.WriteLine($"@{p.Key} = {p.Value?.ToString() ?? "null"}");
+                Trace.WriteLine($"@{p.Key} = {p.Value?.ToString() ?? "null"}");
             }
-            Debug.WriteLine("==================");
+            Trace.WriteLine("==================");
         }
     }
 
@@ -33,8 +34,8 @@ public class QueryLogger
     {
         if (Debugger.IsAttached && obj != null)
         {
-            Debug.WriteLine("==================");
-            Debug.WriteLine("*** Parameters:");
+            Trace.WriteLine("==================");
+            Trace.WriteLine("*** Parameters:");
             try
             {
                 var properties = obj.GetType().GetProperties();
@@ -51,19 +52,19 @@ public class QueryLogger
                         {
                             value = $"ERROR: {ex.Message}";
                         }
-                        Debug.WriteLine($"@{p.Name} = {value}");
+                        Trace.WriteLine($"@{p.Name} = {value}");
                     }
                 }
                 else
                 {
-                    Debug.WriteLine(obj.ToString());
+                    Trace.WriteLine(obj.ToString());
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"ERROR: {ex.Message}");
+                Trace.WriteLine($"ERROR: {ex.Message}");
             }
-            Debug.WriteLine("==================");
+            Trace.WriteLine("==================");
         }
     }
 }
