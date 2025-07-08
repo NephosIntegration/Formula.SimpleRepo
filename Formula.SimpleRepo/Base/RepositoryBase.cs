@@ -127,6 +127,14 @@ public abstract class RepositoryBase<TModel, TConstraintsModel>
         {
             var facts = Inspect(entityToUpdate);
             UpdateModelProperties(entityToUpdate, facts.SanitizedValues);
+
+            // If there are no scoped bindings, we can just update the entity based on the id fields
+            if (facts.ScopedBindings.Parameters == null || !facts.ScopedBindings.Parameters.Any())
+            {
+                return Basic.UpdateAsync(entityToUpdate, transaction, commandTimeout);
+            }
+
+            // Otherwise, we need to update the entity with the scoped bindings
             return Basic.UpdateAsync(entityToUpdate, facts.ScopedBindings.Sql, entityToUpdate, transaction, commandTimeout);
         }
         else

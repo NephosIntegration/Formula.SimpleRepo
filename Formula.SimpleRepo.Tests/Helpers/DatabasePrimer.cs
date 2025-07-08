@@ -10,6 +10,10 @@ public class DatabasePrimer
         var connection = new SqliteConnection(SettingsHelper.GetConnectionString());
         connection.Open();
 
+        // Delete existing tables if they exist
+        connection.Execute("DROP TABLE IF EXISTS Todos");
+        connection.Execute("DROP TABLE IF EXISTS Tests");
+
         // Create a todo table
         connection.Execute(@"
             CREATE TABLE Todos (
@@ -35,6 +39,25 @@ public class DatabasePrimer
 
         connection.Execute("INSERT INTO Tests (uniqueId, testData, ownedBy) VALUES (1, 'Test 1', 'system')");
         connection.Execute("INSERT INTO Tests (uniqueId, testData, ownedBy) VALUES (2, 'Test 2', 'user1')");
+
+        return connection;
+    }
+
+    public static SqliteConnection CreateNoScopeDatabase()
+    {
+        var connection = new SqliteConnection(SettingsHelper.GetConnectionString());
+        connection.Open();
+
+        // Delete existing tables if they exist
+        connection.Execute("DROP TABLE IF EXISTS NoScopeTests");
+
+        // Create a NoScopeTests table
+        connection.Execute(@"
+            CREATE TABLE NoScopeTests (
+                uniqueId INTEGER PRIMARY KEY,
+                testData NVARCHAR(100) NULL
+            )
+        ");
 
         return connection;
     }
