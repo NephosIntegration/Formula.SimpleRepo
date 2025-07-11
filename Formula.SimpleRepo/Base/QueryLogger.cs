@@ -12,7 +12,7 @@ public class QueryLogger
     {
         if (Debugger.IsAttached) 
         { 
-            Console.WriteLine(query); 
+            Trace.WriteLine(query); 
         }
     };
     // Function to log the dictionary of parameters
