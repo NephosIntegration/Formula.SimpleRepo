@@ -17,4 +17,6 @@ public interface IReadOnlyRepository<TModel> : IBuilder
     Task<IEnumerable<TModel>> GetAsync(string json, IDbTransaction transaction = null, int? commandTimeout = null);
     Task<TModel> GetAsync(object id, IDbTransaction transaction = null, int? commandTimeout = null);
     Task<IEnumerable<TModel>> GetAsync(IDbTransaction transaction = null, int? commandTimeout = null);
+    void ClearParameters();
+    void AddParameter(string name, object value);
 }
