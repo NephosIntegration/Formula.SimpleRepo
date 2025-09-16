@@ -36,7 +36,7 @@ public abstract class ReadOnlyRepositoryBase<TModel, TConstraintsModel>
         {
             if (_basicQuery == null)
             {
-                
+
                 _basicQuery = new BasicQuery<TModel, TConstraintsModel>(_config, (query) => LogQuery(query));
             }
             return _basicQuery;
@@ -183,5 +183,4 @@ public abstract class ReadOnlyRepositoryBase<TModel, TConstraintsModel>
         List<Constraint> nothing = null;
         return GetAsync(nothing, transaction, commandTimeout);
     }
-   
 }
