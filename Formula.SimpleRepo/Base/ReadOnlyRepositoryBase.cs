@@ -192,18 +192,18 @@ public abstract class ReadOnlyRepositoryBase<TModel, TConstraintsModel>
         return GetPagedListAsync(pageNumber, rowsPerPage, obj, orderBy, transaction, commandTimeout);
     }
 
-    public Task<int> RecordCountAsync(Hashtable constraints, IDbTransaction transaction = null, int? commandTimeout = null)
+    public Task<int> GetRecordCountAsync(Hashtable constraints, IDbTransaction transaction = null, int? commandTimeout = null)
     {
         var bindable = Where(constraints);
         return Basic.RecordCountAsync(bindable.Sql, bindable.Parameters, transaction, commandTimeout);
     }
 
-    public Task<int> RecordCountAsync(string conditions = "", object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+    public Task<int> GetRecordCountAsync(string conditions = "", object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
     {
         return Basic.RecordCountAsync(conditions, parameters, transaction, commandTimeout);
     }
 
-    public Task<int> RecordCountAsync(object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
+    public Task<int> GetRecordCountAsync(object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
     {
         return Basic.RecordCountAsync(whereConditions, transaction, commandTimeout);
     }

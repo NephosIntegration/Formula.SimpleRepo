@@ -1,4 +1,6 @@
+using Newtonsoft.Json.Linq;
 using System.Collections;
+using System.Text.Json;
 
 namespace Formula.SimpleRepo.Tests;
 
@@ -91,6 +93,85 @@ public class RepositoryBasePagedListTests
     }
 
     [Fact]
+    public async Task PagedList_get_items_with_Hashtable()
+    {
+        // arrange
+        using var connection = DatabasePrimer.CreateTestDatabase(10);
+        var target = new PagedListRepository(SettingsHelper.Configuration);
+        var pageNumber = 1;
+        var rowsPerPage = 10;
+        var constraints = new Hashtable { { "Owner", "system" } };
+
+        // act
+        var actual = await target.GetPagedListAsync(pageNumber, rowsPerPage, constraints);
+
+        // assert
+        Assert.Equal(5, actual.Count());
+    }
+
+    [Fact]
+    public async Task PagedList_get_items_with_list()
+    {
+        // arrange
+        using var connection = DatabasePrimer.CreateTestDatabase(10);
+        var target = new PagedListRepository(SettingsHelper.Configuration);
+        var pageNumber = 1;
+        var rowsPerPage = 10;
+        var constraints = new List<Constraint>
+        {
+            new Constraint
+            {
+                Column = "Owner",
+                DatabaseColumnName = "ownedBy",
+                DataType = TypeCode.String,
+                Value = "system",
+                Comparison = Comparison.Equals
+            }
+        };
+
+        // act
+        var actual = await target.GetPagedListAsync(pageNumber, rowsPerPage, constraints);
+
+        // assert
+        Assert.Equal(5, actual.Count());
+    }
+
+    [Fact]
+    public async Task PagedList_get_items_with_JObject()
+    {
+        // arrange
+        using var connection = DatabasePrimer.CreateTestDatabase(10);
+        var target = new PagedListRepository(SettingsHelper.Configuration);
+        var pageNumber = 1;
+        var rowsPerPage = 10;
+        var constraints = JObject.FromObject(new { Owner = "system" });
+
+        // act
+        var actual = await target.GetPagedListAsync(pageNumber, rowsPerPage, constraints);
+
+        // assert
+        Assert.Equal(5, actual.Count());
+    }
+
+
+    [Fact]
+    public async Task PagedList_get_items_with_json()
+    {
+        // arrange
+        using var connection = DatabasePrimer.CreateTestDatabase(10);
+        var target = new PagedListRepository(SettingsHelper.Configuration);
+        var pageNumber = 1;
+        var rowsPerPage = 10;
+        var constraints = JsonSerializer.Serialize(new { Owner = "system" });
+
+        // act
+        var actual = await target.GetPagedListAsync(pageNumber, rowsPerPage, constraints);
+
+        // assert
+        Assert.Equal(5, actual.Count());
+    }
+
+    [Fact]
     public async Task PagedList_get_items_with_rowsPerPage_0()
     {
         // arrange
@@ -114,7 +195,7 @@ public class RepositoryBasePagedListTests
         var target = new PagedListRepository(SettingsHelper.Configuration);
 
         // act
-        var actual = await target.RecordCountAsync();
+        var actual = await target.GetRecordCountAsync();
 
         // assert
         Assert.Equal(10, actual);
@@ -129,7 +210,7 @@ public class RepositoryBasePagedListTests
         var constraints = new Hashtable { { "Owner", "system" } };
 
         // act
-        var actual = await target.RecordCountAsync(constraints);
+        var actual = await target.GetRecordCountAsync(constraints);
 
         // assert
         Assert.Equal(5, actual);
@@ -144,11 +225,38 @@ public class RepositoryBasePagedListTests
         var constraints = new Hashtable { { "Owner", "system123" } };
 
         // act
-        var actual = await target.RecordCountAsync(constraints);
+        var actual = await target.GetRecordCountAsync(constraints);
 
         // assert
         Assert.Equal(0, actual);
     }
 
+    [Fact]
+    public async Task RecordCount_with_conditions()
+    {
+        // arrange
+        using var connection = DatabasePrimer.CreateTestDatabase(10);
+        var target = new PagedListRepository(SettingsHelper.Configuration);
+
+        // act
+        var actual = await target.GetRecordCountAsync("where ownedBy='system'");
+
+        // assert
+        Assert.Equal(5, actual);
+    }
+
+    [Fact]
+    public async Task RecordCount_with_whereConditions()
+    {
+        // arrange
+        using var connection = DatabasePrimer.CreateTestDatabase(10);
+        var target = new PagedListRepository(SettingsHelper.Configuration);
+
+        // act
+        var actual = await target.GetRecordCountAsync(new  { Owner = "system" });
+
+        // assert
+        Assert.Equal(5, actual);
+    }
 
 }

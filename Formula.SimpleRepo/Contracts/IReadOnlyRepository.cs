@@ -21,9 +21,9 @@ public interface IReadOnlyRepository<TModel> : IBuilder
     Task<IEnumerable<TModel>> GetPagedListAsync(int pageNumber, int rowsPerPage, Hashtable constraints, string orderBy = null, IDbTransaction transaction = null, int? commandTimeout = null);
     Task<IEnumerable<TModel>> GetPagedListAsync(int pageNumber, int rowsPerPage, List<Constraint> constraints, string orderBy, IDbTransaction transaction = null, int? commandTimeout = null);
     Task<IEnumerable<TModel>> GetPagedListAsync(int pageNumber, int rowsPerPage, JObject constraints, string orderBy, IDbTransaction transaction = null, int? commandTimeout = null);
-    Task<int> RecordCountAsync(Hashtable constraints, IDbTransaction transaction = null, int? commandTimeout = null);
-    Task<int> RecordCountAsync(string conditions = "", object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null);
-    Task<int> RecordCountAsync(object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null);
+    Task<int> GetRecordCountAsync(Hashtable constraints, IDbTransaction transaction = null, int? commandTimeout = null);
+    Task<int> GetRecordCountAsync(string conditions = "", object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null);
+    Task<int> GetRecordCountAsync(object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null);
     void ClearParameters();
     void AddParameter(string name, object value);
 }
