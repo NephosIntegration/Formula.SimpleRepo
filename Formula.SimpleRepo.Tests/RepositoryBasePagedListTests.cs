@@ -2,23 +2,22 @@ using System.Collections;
 
 namespace Formula.SimpleRepo.Tests;
 
-public class RepositoryBaseListPagedTests
+public class RepositoryBasePagedListTests
 {
 
     [Fact]
-    public async Task ListPaged_get_filtered_and_sorting_and_get_page_2_()
+    public async Task PagedList_get_filtered_and_sorting_and_get_page_2_()
     {
         // arrange
         using var connection = DatabasePrimer.CreateTestDatabase(100);
-        var target = new ListPagedRepository(SettingsHelper.Configuration);
+        var target = new PagedListRepository(SettingsHelper.Configuration);
         var constraints = new Hashtable { { "Owner", "system" } };
-        var orderBy = "Id DESC";
+        var orderBy = "Id DESC, TestData DESC";
         var pageNumber = 2;
         var rowsPerPage = 10;
 
         // act
-        var actual = await target.GetListPagedAsync(pageNumber, rowsPerPage, constraints, orderBy);
-        connection.Close();
+        var actual = await target.GetPagedListAsync(pageNumber, rowsPerPage, constraints, orderBy);
 
         // assert
         Assert.Equal(rowsPerPage, actual.Count());
@@ -28,51 +27,83 @@ public class RepositoryBaseListPagedTests
     }
 
     [Fact]
-    public async Task ListPaged_get_page_2_empty()
+    public async Task PagedList_get_page_2_empty()
     {
         // arrange
         using var connection = DatabasePrimer.CreateTestDatabase(1);
-        var target = new ListPagedRepository(SettingsHelper.Configuration);
+        var target = new PagedListRepository(SettingsHelper.Configuration);
         var pageNumber = 2;
         var rowsPerPage = 10;
 
         // act
-        var actual = await target.GetListPagedAsync(pageNumber, rowsPerPage, new Hashtable());
+        var actual = await target.GetPagedListAsync(pageNumber, rowsPerPage, new Hashtable());
 
         // assert
         Assert.Empty(actual);
     }
 
     [Fact]
-    public async Task ListPaged_get_all_items_in_one_page_with_extra_rowsPerPage()
+    public async Task PagedList_get_all_items_in_one_page_with_extra_rowsPerPage()
     {
         // arrange
         using var connection = DatabasePrimer.CreateTestDatabase(10);
-        var target = new ListPagedRepository(SettingsHelper.Configuration);
+        var target = new PagedListRepository(SettingsHelper.Configuration);
         var pageNumber = 1;
         var rowsPerPage = 100;
 
         // act
-        var actual = await target.GetListPagedAsync(pageNumber, rowsPerPage, new Hashtable());
+        var actual = await target.GetPagedListAsync(pageNumber, rowsPerPage, new Hashtable());
 
         // assert
         Assert.Equal(10, actual.Count());
     }
 
     [Fact]
-    public async Task ListPaged_get_all_items_in_one_page_with_equals_rowsPerPage()
+    public async Task PagedList_get_all_items_in_one_page_with_equals_rowsPerPage()
     {
         // arrange
         using var connection = DatabasePrimer.CreateTestDatabase(10);
-        var target = new ListPagedRepository(SettingsHelper.Configuration);
+        var target = new PagedListRepository(SettingsHelper.Configuration);
         var pageNumber = 1;
         var rowsPerPage = 10;
 
         // act
-        var actual = await target.GetListPagedAsync(pageNumber, rowsPerPage, new Hashtable());
+        var actual = await target.GetPagedListAsync(pageNumber, rowsPerPage, new Hashtable());
 
         // assert
         Assert.Equal(10, actual.Count());
+    }
+
+    [Fact]
+    public async Task PagedList_get_items_with_pageNumber_0()
+    {
+        // arrange
+        using var connection = DatabasePrimer.CreateTestDatabase(10);
+        var target = new PagedListRepository(SettingsHelper.Configuration);
+        var pageNumber = 0;
+        var rowsPerPage = 10;
+
+        // act
+        var actual = await target.GetPagedListAsync(pageNumber, rowsPerPage, new Hashtable());
+
+        // assert
+        Assert.Equal(10, actual.Count());
+    }
+
+    [Fact]
+    public async Task PagedList_get_items_with_rowsPerPage_0()
+    {
+        // arrange
+        using var connection = DatabasePrimer.CreateTestDatabase(10);
+        var target = new PagedListRepository(SettingsHelper.Configuration);
+        var pageNumber = 1;
+        var rowsPerPage = 0;
+
+        // act
+        var actual = await target.GetPagedListAsync(pageNumber, rowsPerPage, new Hashtable());
+
+        // assert
+        Assert.Empty(actual);
     }
 
     [Fact]
@@ -80,7 +111,7 @@ public class RepositoryBaseListPagedTests
     {
         // arrange
         using var connection = DatabasePrimer.CreateTestDatabase(10);
-        var target = new ListPagedRepository(SettingsHelper.Configuration);
+        var target = new PagedListRepository(SettingsHelper.Configuration);
 
         // act
         var actual = await target.RecordCountAsync();
@@ -94,7 +125,7 @@ public class RepositoryBaseListPagedTests
     {
         // arrange
         using var connection = DatabasePrimer.CreateTestDatabase(10);
-        var target = new ListPagedRepository(SettingsHelper.Configuration);
+        var target = new PagedListRepository(SettingsHelper.Configuration);
         var constraints = new Hashtable { { "Owner", "system" } };
 
         // act
@@ -109,7 +140,7 @@ public class RepositoryBaseListPagedTests
     {
         // arrange
         using var connection = DatabasePrimer.CreateTestDatabase(10);
-        var target = new ListPagedRepository(SettingsHelper.Configuration);
+        var target = new PagedListRepository(SettingsHelper.Configuration);
         var constraints = new Hashtable { { "Owner", "system123" } };
 
         // act

@@ -117,7 +117,13 @@ public abstract class ReadOnlyRepositoryBase<TModel, TConstraintsModel>
         return Basic.GetListAsync(bindable.Sql, bindable.Parameters, transaction, commandTimeout);
     }
 
+    [Obsolete("Use GetPagedListAsync")]
     protected Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, Bindable bindable, string orderby, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+    {
+        return Basic.GetListPagedAsync(pageNumber, rowsPerPage, bindable.Sql, orderby, bindable.Parameters, transaction, commandTimeout);
+    }
+
+    protected Task<IEnumerable<TModel>> GetPagedListAsync(int pageNumber, int rowsPerPage, Bindable bindable, string orderby, IDbTransaction transaction = null, int? commandTimeout = null)
     {
         return Basic.GetListPagedAsync(pageNumber, rowsPerPage, bindable.Sql, orderby, bindable.Parameters, transaction, commandTimeout);
     }
@@ -130,31 +136,60 @@ public abstract class ReadOnlyRepositoryBase<TModel, TConstraintsModel>
 
     public Task<IEnumerable<TModel>> GetAsync(Hashtable constraints, IDbTransaction transaction = null, int? commandTimeout = null)
     {
-        var bindable = Where(constraints ?? new Hashtable());
+        var bindable = Where(constraints);
         return GetAsync(bindable, transaction, commandTimeout);
     }
 
-    public Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, Hashtable constraints, string orderBy = null, IDbTransaction transaction = null, int? commandTimeout = null)
+    [Obsolete("Use GetPagedListAsync")]
+    public Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, Hashtable constraints, string orderBy, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
     {
-        var bindable = Where(constraints);
-        return Basic.GetListPagedAsync(pageNumber, rowsPerPage, bindable.Sql, orderBy, bindable.Parameters, transaction, commandTimeout);
+        var results = Where(constraints);
+        return GetListPagedAsync(pageNumber, rowsPerPage, results, orderBy, parameters, transaction, commandTimeout);
     }
+
+    [Obsolete("Use GetPagedListAsync")]
     public Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, List<Constraint> constraints, string orderBy, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
     {
-        var bindable = Where(constraints);
-        return Basic.GetListPagedAsync(pageNumber, rowsPerPage, bindable.Sql, orderBy, bindable.Parameters, transaction, commandTimeout);
+        var results = Where(constraints);
+        return GetListPagedAsync(pageNumber, rowsPerPage, results, orderBy, parameters, transaction, commandTimeout);
     }
 
+    [Obsolete("Use GetPagedListAsync")]
     public Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, JObject constraints, string orderBy, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
     {
-        var bindable = Where(constraints);
-        return Basic.GetListPagedAsync(pageNumber, rowsPerPage, bindable.Sql, orderBy, bindable.Parameters, transaction, commandTimeout);
+        var results = Where(constraints);
+        return GetListPagedAsync(pageNumber, rowsPerPage, results, orderBy, parameters, transaction, commandTimeout);
     }
 
+    [Obsolete("Use GetPagedListAsync")]
     public Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, string json, string orderBy, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
     {
         var obj = JsonConvert.DeserializeObject<JObject>(json);
         return GetListPagedAsync(pageNumber, rowsPerPage, obj, orderBy, parameters, transaction, commandTimeout);
+    }
+
+    public Task<IEnumerable<TModel>> GetPagedListAsync(int pageNumber, int rowsPerPage, Hashtable constraints, string orderBy = null, IDbTransaction transaction = null, int? commandTimeout = null)
+    {
+        var bindable = Where(constraints);
+        return GetPagedListAsync(pageNumber, rowsPerPage, bindable, orderBy, transaction, commandTimeout);
+    }
+
+    public Task<IEnumerable<TModel>> GetPagedListAsync(int pageNumber, int rowsPerPage, List<Constraint> constraints, string orderBy = null, IDbTransaction transaction = null, int? commandTimeout = null)
+    {
+        var bindable = Where(constraints);
+        return GetPagedListAsync(pageNumber, rowsPerPage, bindable, orderBy, transaction, commandTimeout);
+    }
+
+    public Task<IEnumerable<TModel>> GetPagedListAsync(int pageNumber, int rowsPerPage, JObject constraints, string orderBy = null, IDbTransaction transaction = null, int? commandTimeout = null)
+    {
+        var bindable = Where(constraints);
+        return GetPagedListAsync(pageNumber, rowsPerPage, bindable, orderBy, transaction, commandTimeout);
+    }
+
+    public Task<IEnumerable<TModel>> GetPagedListAsync(int pageNumber, int rowsPerPage, string json, string orderBy = null, IDbTransaction transaction = null, int? commandTimeout = null)
+    {
+        var obj = JsonConvert.DeserializeObject<JObject>(json);
+        return GetPagedListAsync(pageNumber, rowsPerPage, obj, orderBy, transaction, commandTimeout);
     }
 
     public Task<int> RecordCountAsync(Hashtable constraints, IDbTransaction transaction = null, int? commandTimeout = null)
@@ -198,4 +233,5 @@ public abstract class ReadOnlyRepositoryBase<TModel, TConstraintsModel>
         List<Constraint> nothing = null;
         return GetAsync(nothing, transaction, commandTimeout);
     }
+  
 }

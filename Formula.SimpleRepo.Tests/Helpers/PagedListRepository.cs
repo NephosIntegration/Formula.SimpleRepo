@@ -4,9 +4,9 @@ using System.Data;
 namespace Formula.SimpleRepo.Tests;
 
 [Repo]
-public class ListPagedRepository : RepositoryBase<TestModel, TestModel>
+public class PagedListRepository : RepositoryBase<TestModel, TestModel>
 {
-    public ListPagedRepository(IConfiguration config) : base(config) {}
+    public PagedListRepository(IConfiguration config) : base(config) {}
 
     public string LastQuery { get; private set; } = "";
     public override void LogQuery(string query)
