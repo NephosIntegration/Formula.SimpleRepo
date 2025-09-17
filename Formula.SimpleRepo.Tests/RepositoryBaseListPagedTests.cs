@@ -37,7 +37,7 @@ public class RepositoryBaseListPagedTests
         var rowsPerPage = 10;
 
         // act
-        var actual = await target.GetListPagedAsync(pageNumber, rowsPerPage);
+        var actual = await target.GetListPagedAsync(pageNumber, rowsPerPage, new Hashtable());
 
         // assert
         Assert.Empty(actual);
@@ -53,7 +53,7 @@ public class RepositoryBaseListPagedTests
         var rowsPerPage = 100;
 
         // act
-        var actual = await target.GetListPagedAsync(pageNumber, rowsPerPage);
+        var actual = await target.GetListPagedAsync(pageNumber, rowsPerPage, new Hashtable());
 
         // assert
         Assert.Equal(10, actual.Count());
@@ -69,7 +69,7 @@ public class RepositoryBaseListPagedTests
         var rowsPerPage = 10;
 
         // act
-        var actual = await target.GetListPagedAsync(pageNumber, rowsPerPage);
+        var actual = await target.GetListPagedAsync(pageNumber, rowsPerPage, new Hashtable());
 
         // assert
         Assert.Equal(10, actual.Count());
