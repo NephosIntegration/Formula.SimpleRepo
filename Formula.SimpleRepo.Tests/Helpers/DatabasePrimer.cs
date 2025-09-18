@@ -6,8 +6,6 @@ namespace Formula.SimpleRepo.Tests;
 
 public class DatabasePrimer
 {
-    private static readonly object lockObject = new object();
-
     public static SqliteConnection CreateTodoDatabase()
     {
         var connection = new SqliteConnection(SettingsHelper.GetConnectionString());
