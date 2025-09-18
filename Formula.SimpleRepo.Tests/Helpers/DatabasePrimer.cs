@@ -1,5 +1,6 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
+// we call this out to disable parallelization of tests because we are using a shared in-memory database
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
 namespace Formula.SimpleRepo.Tests;
