@@ -1,4 +1,5 @@
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -11,19 +12,32 @@ public interface IReadOnlyRepository<TModel> : IBuilder
     IBasicQuery<TModel> Basic { get; }
     List<string> GetIdFields();
     Hashtable GetPopulatedIdFields(object value);
+
     Task<IEnumerable<TModel>> GetAsync(List<Constraint> finalConstraints, IDbTransaction transaction = null, int? commandTimeout = null);
     Task<IEnumerable<TModel>> GetAsync(Hashtable constraints, IDbTransaction transaction = null, int? commandTimeout = null);
     Task<IEnumerable<TModel>> GetAsync(JObject json, IDbTransaction transaction = null, int? commandTimeout = null);
     Task<IEnumerable<TModel>> GetAsync(string json, IDbTransaction transaction = null, int? commandTimeout = null);
     Task<TModel> GetAsync(object id, IDbTransaction transaction = null, int? commandTimeout = null);
     Task<IEnumerable<TModel>> GetAsync(IDbTransaction transaction = null, int? commandTimeout = null);
+
+    [Obsolete("Use GetPagedListAsync")]
+    Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, string conditions, string orderby, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null);
+    [Obsolete("Use GetPagedListAsync")]
+    Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, Hashtable constraints, string orderBy = null, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null);
+    [Obsolete("Use GetPagedListAsync")]
+    Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, List<Constraint> constraints, string orderBy, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null);
+    [Obsolete("Use GetPagedListAsync")]
+    Task<IEnumerable<TModel>> GetListPagedAsync(int pageNumber, int rowsPerPage, JObject constraints, string orderBy, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null);
+
     Task<IEnumerable<TModel>> GetPagedListAsync(int pageNumber, int rowsPerPage, string conditions, string orderby, IDbTransaction transaction = null, int? commandTimeout = null);
     Task<IEnumerable<TModel>> GetPagedListAsync(int pageNumber, int rowsPerPage, Hashtable constraints, string orderBy = null, IDbTransaction transaction = null, int? commandTimeout = null);
     Task<IEnumerable<TModel>> GetPagedListAsync(int pageNumber, int rowsPerPage, List<Constraint> constraints, string orderBy, IDbTransaction transaction = null, int? commandTimeout = null);
     Task<IEnumerable<TModel>> GetPagedListAsync(int pageNumber, int rowsPerPage, JObject constraints, string orderBy, IDbTransaction transaction = null, int? commandTimeout = null);
+
     Task<int> GetRecordCountAsync(Hashtable constraints, IDbTransaction transaction = null, int? commandTimeout = null);
     Task<int> GetRecordCountAsync(string conditions = "", object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null);
     Task<int> GetRecordCountAsync(object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null);
+
     void ClearParameters();
     void AddParameter(string name, object value);
 }
