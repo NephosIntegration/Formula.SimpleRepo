@@ -171,12 +171,14 @@ Othewise, you can specify the parameters on the list of repository parameters.
 ```
 
 ```c#
+_repository.ClearParameters();
 _repository.AddParameter("Param1", 1234);
 _repository.AddParameter("Param2", "abc");
 var results = await _repository.GetAsync();
 ```
 
-> **Note** - In a situation like this, use a unique parameter, otherwise, the parameter you supply to the repository will override any that match the parameter name later.
+> - Call ClearParameters() method to avoid parameters from previous calls being retained.  
+> - In a situation like this, use a unique parameter, otherwise, the parameter you supply to the repository will override any that match the parameter name later.
 
 ## Step 2 - Create a Repository
 

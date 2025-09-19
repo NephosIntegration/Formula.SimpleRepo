@@ -91,6 +91,14 @@ public abstract class BuilderBase<TConstraintsModel>
     }
 
     /// <summary>
+    /// Clear all global parameters before adding new ones
+    /// </summary>
+    public void ClearParameters()
+    {
+        _parameters.Clear();
+    }
+
+    /// <summary>
     /// Add a global parameter to be applied at the end
     /// </summary>
     /// <param name="name"></param>
