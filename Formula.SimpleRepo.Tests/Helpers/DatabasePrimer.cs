@@ -1,7 +1,10 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
+using Xunit.Sdk;
+using Xunit.v3;
+
 // we call this out to disable parallelization of tests because we are using a shared in-memory database
-[assembly: CollectionBehavior(DisableTestParallelization = true)]
+[assembly: Parallelization(Mode = ParallelMode.None)]
 
 namespace Formula.SimpleRepo.Tests;
 
@@ -67,27 +70,27 @@ public class DatabasePrimer
 
     public static SqliteConnection CreateTestDatabase(int recordCount)
     {
-            var connection = new SqliteConnection(SettingsHelper.GetConnectionString());
-            connection.Open();
+        var connection = new SqliteConnection(SettingsHelper.GetConnectionString());
+        connection.Open();
 
-            // Delete existing tables if they exist
-            connection.Execute("DROP TABLE IF EXISTS Tests");
+        // Delete existing tables if they exist
+        connection.Execute("DROP TABLE IF EXISTS Tests");
 
-            // Create a test table
-            connection.Execute(@"
+        // Create a test table
+        connection.Execute(@"
             CREATE TABLE Tests (
                 uniqueId INTEGER PRIMARY KEY,
                 testData NVARCHAR(100) NULL,
                 ownedBy NVARCHAR(100) NOT NULL DEFAULT 'system'
             );");
 
-            // Insert recordCount row's
-            for (int i = 1; i <= recordCount; i++)
-            {
-                connection.Execute("INSERT INTO Tests (uniqueId, testData, ownedBy) VALUES (@Id, @TestData, @Owner)", new { Id = i, TestData = $"Test {i}", Owner = i % 2 == 0 ? "user1" : "system" });
-            }
+        // Insert recordCount row's
+        for (int i = 1; i <= recordCount; i++)
+        {
+            connection.Execute("INSERT INTO Tests (uniqueId, testData, ownedBy) VALUES (@Id, @TestData, @Owner)", new { Id = i, TestData = $"Test {i}", Owner = i % 2 == 0 ? "user1" : "system" });
+        }
 
-            return connection;
-        
+        return connection;
+
     }
 }
